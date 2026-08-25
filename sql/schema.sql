@@ -18,7 +18,7 @@ create table if not exists public.configuracoes_evento (
   lista_espera_ativa boolean not null default true,
   limite_maximo integer,
   modo_distribuicao text not null default 'equilibrado_faixa',
-  admin_pin text not null default 'geracao2026',
+  admin_pin text not null default '',
   atualizado_em timestamptz not null default now(),
   constraint modo_valido check (modo_distribuicao in (
     'equilibrado',
@@ -29,7 +29,7 @@ create table if not exists public.configuracoes_evento (
 );
 
 alter table public.configuracoes_evento
-  add column if not exists admin_pin text not null default 'geracao2026';
+  add column if not exists admin_pin text not null default '';
 create table if not exists public.faixas_etarias (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
@@ -460,6 +460,14 @@ create policy "auth faixas upd" on public.faixas_etarias for all to authenticate
 insert into public.configuracoes_evento (admin_pin)
 select 'geracao2026'
 where not exists (select 1 from public.configuracoes_evento);
+
+insert into public.administradores (nome, email, papel)
+values
+  ('Beatriz', 'beatriz@geucaristica.com.br', 'coordenador'),
+  ('Lavínia', 'lavinia@geucaristica.com.br', 'administrador'),
+  ('Duda', 'duda@geucaristica.com.br', 'administrador'),
+  ('João Gabriel', 'joaogabriel@geucaristica.com.br', 'administrador')
+on conflict (email) do nothing;
 
 insert into public.onibus (nome, numero, capacidade, cor, ordem, descricao)
 select * from (values

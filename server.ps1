@@ -20,7 +20,7 @@ Write-Host " DNJ 2026 ligado"
 Write-Host " Site:     http://127.0.0.1:$port/"
 Write-Host " Dashboard: http://127.0.0.1:$port/admin.html"
 Write-Host " Check-in: http://127.0.0.1:$port/checkin.html"
-Write-Host " Senha:    geracao2026"
+Write-Host " Senha admin local: veja data/config.json"
 Write-Host ""
 Start-Process "http://127.0.0.1:$port/"
 
@@ -84,10 +84,16 @@ function Send-IndexHtml($res, $file, $req) {
 }
 function Is-Admin($req) {
   $cfg = Read-Auth
-  $h = $req.Headers["X-Admin-Password"]
-  if (-not $h) { $h = $req.Headers["Authorization"] }
-  if ($h -and $h.StartsWith("Bearer ")) { $h = $h.Substring(7) }
-  return ($h -eq $cfg.adminPassword)
+  $db = Read-Db
+  $email = [string]$req.Headers["X-Admin-Email"]
+  $pass = [string]$req.Headers["X-Admin-Password"]
+  if (-not $pass) {
+    $auth = [string]$req.Headers["Authorization"]
+    if ($auth -and $auth.StartsWith("Bearer ")) { $pass = $auth.Substring(7) }
+  }
+  if (-not $email -or -not $pass) { return $false }
+  $admin = Test-AdminEmail $db $email
+  return ($admin -and $pass -eq $cfg.adminPassword)
 }
 
 while ($listener.IsListening) {
@@ -99,7 +105,7 @@ while ($listener.IsListening) {
     if ($method -eq "OPTIONS") {
       $res.StatusCode = 204
       $res.Headers.Add("Access-Control-Allow-Origin","*")
-      $res.Headers.Add("Access-Control-Allow-Headers","Content-Type, X-Admin-Password, Authorization")
+      $res.Headers.Add("Access-Control-Allow-Headers","Content-Type, X-Admin-Email, X-Admin-Password, Authorization")
       $res.Headers.Add("Access-Control-Allow-Methods","GET, POST, PATCH, OPTIONS")
       $res.Close(); continue
     }
@@ -113,14 +119,23 @@ while ($listener.IsListening) {
       continue
     }
     if ($path -match "^/api/inscricoes/([^/]+)$" -and $method -eq "GET") {
-      $item = Public-Lookup ([Uri]::UnescapeDataString($Matches[1]))
+      $code = [Uri]::UnescapeDataString($Matches[1])
+      if (Is-Admin $req) {
+        $item = Admin-Lookup $code
+        if (-not $item) { Send-Json $res 404 @{ error="not_found" } } else { Send-Json $res 200 $item }
+        continue
+      }
+      $nasc = $req.QueryString["nascimento"]
+      $item = Public-Lookup $code $nasc
       if (-not $item) { Send-Json $res 404 @{ error="not_found" } } else { Send-Json $res 200 $item }
       continue
     }
     if ($path -eq "/api/admin/login" -and $method -eq "POST") {
-      $body = Read-Body $req; $cfg = Read-Auth
-      if ($body.password -eq $cfg.adminPassword) { Send-Json $res 200 @{ ok=$true; papel="administrador" } }
-      else { Send-Json $res 401 @{ ok=$false } }
+      $body = Read-Body $req; $cfg = Read-Auth; $db = Read-Db
+      $admin = Test-AdminEmail $db ([string]$body.email)
+      if ($admin -and $body.password -eq $cfg.adminPassword) {
+        Send-Json $res 200 @{ ok=$true; nome=$admin.nome; email=$admin.email; papel=$admin.papel }
+      } else { Send-Json $res 401 @{ ok=$false } }
       continue
     }
     if ($path -eq "/api/dashboard" -and $method -eq "GET") {

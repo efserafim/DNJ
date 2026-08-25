@@ -49,21 +49,9 @@
     try { localStorage.setItem(KEY, JSON.stringify(record)); } catch (_) {}
   }
 
-  function restoreMine() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (!saved?.codigo_inscricao) return;
-      current = saved;
-      const mine = document.getElementById("btn-mine");
-      mine.hidden = false;
-      mine.textContent = `Minha inscrição · ${saved.codigo_inscricao}`;
-    } catch (_) {}
-  }
-
   function fillTicket(record) {
     current = record;
     remember(record);
-    restoreMine();
     const wait = record.status === "lista_espera";
     document.getElementById("confirm-code").textContent = record.codigo_inscricao;
     document.getElementById("confirm-lead").textContent = wait
@@ -129,11 +117,6 @@
   document.getElementById("btn-close-ticket").addEventListener("click", () => ticket.close());
   document.getElementById("btn-lookup").addEventListener("click", () => lookup.showModal());
   document.getElementById("btn-close-lookup").addEventListener("click", () => lookup.close());
-  document.getElementById("btn-mine").addEventListener("click", () => {
-    if (!current) return;
-    fillTicket(current);
-    show("confirm");
-  });
   document.getElementById("confirm-code").addEventListener("click", () => copyCode(current?.codigo_inscricao));
   document.getElementById("btn-copy-ticket").addEventListener("click", () => copyCode(current?.codigo_inscricao));
   document.getElementById("btn-share").addEventListener("click", shareWhatsapp);
@@ -150,10 +133,9 @@
     errorBox.hidden = true;
     btn.disabled = true;
     try {
-      const row = await window.DNJApi.lookup(event.target.codigo.value);
+      const row = await window.DNJApi.lookup(event.target.codigo.value, event.target.nascimento.value);
       current = row;
       remember(row);
-      restoreMine();
       fillTicket(row);
       result.hidden = false;
       document.getElementById("lookup-name").textContent = row.nome_completo;
@@ -169,7 +151,7 @@
     } catch (_) {
       result.hidden = true;
       errorBox.hidden = false;
-      errorBox.textContent = "Não encontramos essa inscrição. Use o código DNJ26-… ou o WhatsApp.";
+      errorBox.textContent = "Não encontramos essa inscrição. Confira o código ou WhatsApp e a data de nascimento.";
     } finally {
       btn.disabled = false;
     }
@@ -205,7 +187,6 @@
 
   tickCountdown();
   setInterval(tickCountdown, 1000);
-  restoreMine();
   loadInscricoesStatus();
   show("hero");
 })();

@@ -54,35 +54,117 @@ begin
 end;
 $$;
 
+create or replace function public.assert_admin_email(p_email text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_nome text;
+begin
+  if p_email is null or length(trim(p_email)) = 0 then
+    raise exception 'unauthorized';
+  end if;
+  select nome into v_nome
+  from public.administradores
+  where lower(trim(email)) = lower(trim(p_email))
+    and ativo = true
+  limit 1;
+  if v_nome is null then
+    raise exception 'unauthorized';
+  end if;
+  return v_nome;
+end;
+$$;
+
 create or replace function public.assert_admin(p_pin text)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_stored text;
 begin
-  if not exists (
-    select 1 from public.configuracoes_evento
-    where coalesce(admin_pin, 'geracao2026') = p_pin
-  ) then
+  if p_pin is null or length(trim(p_pin)) = 0 then
     raise exception 'unauthorized';
   end if;
+  select admin_pin into v_stored from public.configuracoes_evento limit 1;
+  if v_stored is null or length(v_stored) = 0 then
+    raise exception 'unauthorized';
+  end if;
+  if v_stored like '$2%' then
+    if v_stored = crypt(trim(p_pin), v_stored) then
+      return;
+    end if;
+  elsif v_stored = trim(p_pin) then
+    return;
+  end if;
+  raise exception 'unauthorized';
 end;
 $$;
 
-create or replace function public.admin_login(p_pin text)
-returns boolean
+create or replace function public.assert_admin_session(p_email text, p_pin text)
+returns text
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_nome text;
 begin
+  v_nome := public.assert_admin_email(p_email);
   perform public.assert_admin(p_pin);
-  return true;
+  return v_nome;
 end;
 $$;
 
-create or replace function public.admin_checkin(p_pin text, p_codigo text)
+drop function if exists public.admin_login(text);
+
+create or replace function public.admin_login(p_email text, p_pin text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_nome text;
+begin
+  v_nome := public.assert_admin_session(p_email, p_pin);
+  return jsonb_build_object('ok', true, 'nome', v_nome, 'email', lower(trim(p_email)));
+end;
+$$;
+
+drop function if exists public.admin_checkin(text, text);
+drop function if exists public.admin_obter_inscricao(text, text, text);
+
+create or replace function public.admin_obter_inscricao(p_email text, p_pin text, p_codigo text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v public.inscricoes;
+begin
+  perform public.assert_admin_session(p_email, p_pin);
+  select * into v from public.inscricoes
+  where upper(codigo_inscricao) = upper(trim(p_codigo))
+     or upper(qr_code) = upper(trim(p_codigo))
+     or id::text = trim(p_codigo)
+  limit 1;
+  if v.id is null then
+    raise exception 'not_found';
+  end if;
+  return to_jsonb(v) || jsonb_build_object(
+    'onibus_nome', (select nome from public.onibus where id = v.onibus_id),
+    'faixa_nome', (select nome from public.faixas_etarias where id = v.faixa_etaria_id)
+  );
+end;
+$$;
+
+create or replace function public.admin_checkin(p_email text, p_pin text, p_codigo text)
 returns jsonb
 language plpgsql
 security definer
@@ -92,7 +174,7 @@ declare
   v public.inscricoes;
   c public.checkins;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes
   where codigo_inscricao = p_codigo or qr_code = p_codigo or id::text = p_codigo
   limit 1;
@@ -112,7 +194,9 @@ begin
 end;
 $$;
 
-create or replace function public.admin_transfer(p_pin text, p_inscricao uuid, p_onibus uuid)
+drop function if exists public.admin_transfer(text, uuid, uuid);
+
+create or replace function public.admin_transfer(p_email text, p_pin text, p_inscricao uuid, p_onibus uuid)
 returns jsonb
 language plpgsql
 security definer
@@ -124,7 +208,7 @@ declare
   occ int;
   seat int;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes where id = p_inscricao;
   if v.id is null then raise exception 'not_found'; end if;
   cap := public.capacidade_util(p_onibus);
@@ -147,7 +231,9 @@ begin
 end;
 $$;
 
-create or replace function public.admin_update_inscricao(p_pin text, p_id uuid, p jsonb)
+drop function if exists public.admin_update_inscricao(text, uuid, jsonb);
+
+create or replace function public.admin_update_inscricao(p_email text, p_pin text, p_id uuid, p jsonb)
 returns jsonb
 language plpgsql
 security definer
@@ -155,7 +241,7 @@ set search_path = public
 as $$
 declare v public.inscricoes;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   update public.inscricoes set
     nome_completo = coalesce(p->>'nome_completo', nome_completo),
     status = coalesce(p->>'status', status),
@@ -172,14 +258,16 @@ begin
 end;
 $$;
 
-create or replace function public.admin_excluir_inscricao(p_pin text, p_id uuid)
+drop function if exists public.admin_excluir_inscricao(text, uuid);
+
+create or replace function public.admin_excluir_inscricao(p_email text, p_pin text, p_id uuid)
 returns boolean
 language plpgsql
 security definer
 set search_path = public
 as $$
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   if not exists (select 1 from public.inscricoes where id = p_id) then
     raise exception 'Inscricao nao encontrada';
   end if;
@@ -195,7 +283,9 @@ begin
 end;
 $$;
 
-create or replace function public.admin_promover(p_pin text, p_onibus uuid default null)
+drop function if exists public.admin_promover(text, uuid);
+
+create or replace function public.admin_promover(p_email text, p_pin text, p_onibus uuid default null)
 returns jsonb
 language plpgsql
 security definer
@@ -206,13 +296,13 @@ declare
   v public.inscricoes;
   dest uuid;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   select * into e from public.lista_espera where status = 'aguardando' order by posicao limit 1;
   if e.id is null then return null; end if;
   select * into v from public.inscricoes where id = e.inscricao_id;
   dest := coalesce(p_onibus, public.escolher_onibus(v.faixa_etaria_id));
   if dest is null then raise exception 'Sem vaga'; end if;
-  perform public.admin_transfer(p_pin, v.id, dest);
+  perform public.admin_transfer(p_email, p_pin, v.id, dest);
   select * into v from public.inscricoes where id = v.id;
   return jsonb_build_object(
     'alerta', 'Uma vaga foi liberada no ' || (select nome from public.onibus where id = dest),
@@ -227,21 +317,17 @@ language sql
 stable
 as $$
   select jsonb_build_object(
-    'id', i.id,
     'codigo_inscricao', i.codigo_inscricao,
     'nome_completo', i.nome_completo,
     'idade', i.idade,
     'status', i.status,
-    'presente', i.presente,
     'assento', i.assento,
-    'whatsapp', i.whatsapp,
-    'onibus_id', i.onibus_id,
     'onibus_nome', o.nome,
     'faixa_nome', f.nome
   );
 $$;
 
-create or replace function public.consultar_inscricao(p_codigo text)
+create or replace function public.consultar_inscricao(p_codigo text, p_nascimento date)
 returns jsonb
 language sql
 stable
@@ -252,12 +338,17 @@ as $$
   from public.inscricoes i
   left join public.onibus o on o.id = i.onibus_id
   left join public.faixas_etarias f on f.id = i.faixa_etaria_id
-  where upper(i.codigo_inscricao) = upper(trim(p_codigo))
-     or upper(i.qr_code) = upper(trim(p_codigo))
+  where p_nascimento is not null
+    and i.data_nascimento = p_nascimento
+    and i.status <> 'cancelada'
+    and (
+      upper(i.codigo_inscricao) = upper(trim(p_codigo))
+      or upper(i.qr_code) = upper(trim(p_codigo))
+    )
   limit 1;
 $$;
 
-create or replace function public.consultar_por_whatsapp(p_whatsapp text)
+create or replace function public.consultar_por_whatsapp(p_whatsapp text, p_nascimento date)
 returns jsonb
 language plpgsql
 stable
@@ -268,6 +359,9 @@ declare
   v_phone text;
   v jsonb;
 begin
+  if p_nascimento is null then
+    return null;
+  end if;
   v_phone := regexp_replace(coalesce(p_whatsapp, ''), '\D', '', 'g');
   if length(v_phone) < 10 then
     return null;
@@ -277,6 +371,7 @@ begin
   left join public.onibus o on o.id = i.onibus_id
   left join public.faixas_etarias f on f.id = i.faixa_etaria_id
   where regexp_replace(i.whatsapp, '\D', '', 'g') = v_phone
+    and i.data_nascimento = p_nascimento
     and i.status <> 'cancelada'
   order by i.criado_em desc
   limit 1;
@@ -308,7 +403,9 @@ as $$
   );
 $$;
 
-create or replace function public.admin_dashboard(p_pin text)
+drop function if exists public.admin_dashboard(text);
+
+create or replace function public.admin_dashboard(p_email text, p_pin text)
 returns jsonb
 language plpgsql
 stable
@@ -318,7 +415,7 @@ as $$
 declare
   cfg jsonb;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   select to_jsonb(c) - 'admin_pin' into cfg from public.configuracoes_evento c limit 1;
   return jsonb_build_object(
     'config', cfg,
@@ -339,26 +436,29 @@ begin
 end;
 $$;
 
-grant execute on function public.assert_admin(text) to anon, authenticated;
-grant execute on function public.admin_login(text) to anon, authenticated;
-grant execute on function public.admin_checkin(text, text) to anon, authenticated;
-grant execute on function public.admin_transfer(text, uuid, uuid) to anon, authenticated;
-grant execute on function public.admin_update_inscricao(text, uuid, jsonb) to anon, authenticated;
-grant execute on function public.admin_excluir_inscricao(text, uuid) to anon, authenticated;
-grant execute on function public.admin_promover(text, uuid) to anon, authenticated;
-grant execute on function public.consultar_inscricao(text) to anon, authenticated;
-grant execute on function public.consultar_por_whatsapp(text) to anon, authenticated;
+grant execute on function public.admin_login(text, text) to anon, authenticated;
+grant execute on function public.admin_obter_inscricao(text, text, text) to anon, authenticated;
+grant execute on function public.admin_checkin(text, text, text) to anon, authenticated;
+grant execute on function public.admin_transfer(text, text, uuid, uuid) to anon, authenticated;
+grant execute on function public.admin_update_inscricao(text, text, uuid, jsonb) to anon, authenticated;
+grant execute on function public.admin_excluir_inscricao(text, text, uuid) to anon, authenticated;
+grant execute on function public.admin_promover(text, text, uuid) to anon, authenticated;
+grant execute on function public.consultar_inscricao(text, date) to anon, authenticated;
+grant execute on function public.consultar_por_whatsapp(text, date) to anon, authenticated;
 grant execute on function public.vagas_resumo() to anon, authenticated;
-grant execute on function public.admin_dashboard(text) to anon, authenticated;
-create or replace function public.admin_save_config(p_pin text, p jsonb)
+grant execute on function public.admin_dashboard(text, text) to anon, authenticated;
+drop function if exists public.admin_save_config(text, jsonb);
+
+create or replace function public.admin_save_config(p_email text, p_pin text, p jsonb)
 returns boolean
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare r jsonb;
+        v_nova text;
 begin
-  perform public.assert_admin(p_pin);
+  perform public.assert_admin_session(p_email, p_pin);
   update public.configuracoes_evento set
     nome_evento = coalesce(nullif(p->>'nome_evento', ''), nome_evento),
     data_evento = coalesce(nullif(p->>'data_evento', '')::date, data_evento),
@@ -369,6 +469,19 @@ begin
     lista_espera_ativa = case when p ? 'lista_espera_ativa' then (p->>'lista_espera_ativa')::boolean else lista_espera_ativa end,
     atualizado_em = now()
   where id in (select c.id from public.configuracoes_evento c);
+  v_nova := nullif(trim(p->>'nova_senha'), '');
+  if v_nova is not null then
+    if length(v_nova) < 10 then
+      raise exception 'Senha fraca: use pelo menos 10 caracteres';
+    end if;
+    if lower(v_nova) in ('geracao2026', 'admin', '12345678', '1234567890') then
+      raise exception 'Senha fraca: escolha outra senha';
+    end if;
+    update public.configuracoes_evento set
+      admin_pin = crypt(v_nova, gen_salt('bf')),
+      atualizado_em = now()
+    where id in (select c.id from public.configuracoes_evento c);
+  end if;
   if jsonb_typeof(p->'onibus') = 'array' then
     for r in select * from jsonb_array_elements(p->'onibus') loop
       if coalesce(r->>'id', '') <> '' then
@@ -403,13 +516,21 @@ begin
 end;
 $$;
 
-grant execute on function public.admin_save_config(text, jsonb) to anon, authenticated;
+grant execute on function public.admin_save_config(text, text, jsonb) to anon, authenticated;
+
+revoke execute on function public.assert_admin_email(text) from public, anon, authenticated;
+revoke execute on function public.assert_admin(text) from public, anon, authenticated;
+revoke execute on function public.assert_admin_session(text, text) from public, anon, authenticated;
 
 grant usage on schema public to anon, authenticated;
 grant select on table public.onibus to anon, authenticated;
 grant select on table public.faixas_etarias to anon, authenticated;
-revoke select on table public.inscricoes from public, anon, authenticated;
-revoke select on table public.lista_espera from public, anon, authenticated;
+revoke all on table public.inscricoes from public, anon, authenticated;
+revoke all on table public.lista_espera from public, anon, authenticated;
+revoke all on table public.administradores from public, anon, authenticated;
+revoke all on table public.checkins from public, anon, authenticated;
+revoke all on table public.assentos from public, anon, authenticated;
+revoke all on table public.logs from public, anon, authenticated;
 drop policy if exists "publico le espera" on public.lista_espera;
 drop policy if exists "consulta por codigo" on public.inscricoes;
 

@@ -1,6 +1,10 @@
 (() => {
   const KEY = "dnj2026_admin";
+  const EMAIL_KEY = "dnj2026_admin_email";
+  const NAME_KEY = "dnj2026_admin_nome";
   let password = sessionStorage.getItem(KEY) || "";
+  let adminEmail = sessionStorage.getItem(EMAIL_KEY) || "";
+  let adminName = sessionStorage.getItem(NAME_KEY) || "";
   let data = null;
   let view = "home";
   let timer = 0;
@@ -66,7 +70,7 @@
       return;
     }
     if (!confirm(`Mover ${person.nome_completo} para o ${dest.nome}?`)) return;
-    await window.DNJApi.transfer(password, id, destId);
+    await window.DNJApi.transfer(adminEmail, password, id, destId);
     await refresh();
     if (view === "buses" && currentBusId) openBus(currentBusId);
   }
@@ -88,7 +92,9 @@
 
   function renderStats() {
     const s = data.stats;
-    qs("hello").textContent = data.saudacao || "Olá, administrador!";
+    const hour = new Date().getHours();
+    const greet = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+    qs("hello").textContent = adminName ? `${greet}, ${adminName}!` : (data.saudacao || "Olá, administrador!");
     qs("stats").innerHTML = [
       ["Inscritos", s.total],
       ["Confirmados", s.confirmadas],
@@ -246,7 +252,7 @@
   }
 
   async function refresh() {
-    data = await window.DNJApi.dashboard(password);
+    data = await window.DNJApi.dashboard(adminEmail, password);
     paint();
   }
 
@@ -290,13 +296,13 @@
     const cancel = e.target.closest("[data-cancel]");
     const del = e.target.closest("[data-del]");
     try {
-      if (check) { await window.DNJApi.checkin(password, check.dataset.check); await refresh(); }
+      if (check) { await window.DNJApi.checkin(adminEmail, password, check.dataset.check); await refresh(); }
       if (cancel && confirm("Cancelar esta inscrição? O assento será liberado, mas o cadastro permanece.")) {
-        await window.DNJApi.update(password, cancel.dataset.cancel, { status: "cancelada" });
+        await window.DNJApi.update(adminEmail, password, cancel.dataset.cancel, { status: "cancelada" });
         await refresh();
       }
       if (del && confirm(`Excluir ${del.dataset.nome}?\n\nA inscrição some da lista, a vaga do ônibus é liberada e a pessoa pode se inscrever de novo.`)) {
-        await window.DNJApi.remove(password, del.dataset.del);
+        await window.DNJApi.remove(adminEmail, password, del.dataset.del);
         await refresh();
       }
       const mover = e.target.closest("[data-move]");
@@ -313,7 +319,7 @@
     if (!del) return;
     try {
       if (confirm(`Excluir ${del.dataset.nome} da lista de espera?`)) {
-        await window.DNJApi.remove(password, del.dataset.del);
+        await window.DNJApi.remove(adminEmail, password, del.dataset.del);
         await refresh();
       }
     } catch (err) {
@@ -322,7 +328,7 @@
   });
   qs("btn-promote").addEventListener("click", async () => {
     try {
-      const r = await window.DNJApi.promover(password, null);
+      const r = await window.DNJApi.promover(adminEmail, password, null);
       alert(r?.alerta || (r ? "Promovido." : "Ninguém na espera ou sem vaga."));
       await refresh();
     } catch (err) {
@@ -332,7 +338,7 @@
   qs("transfer-no").addEventListener("click", () => qs("transfer").close());
   qs("transfer-yes").addEventListener("click", async () => {
     try {
-      if (pendingTransfer) await window.DNJApi.transfer(password, pendingTransfer.id, pendingTransfer.dest.id);
+      if (pendingTransfer) await window.DNJApi.transfer(adminEmail, password, pendingTransfer.id, pendingTransfer.dest.id);
       qs("transfer").close();
       await refresh();
     } catch (err) {
@@ -343,10 +349,26 @@
     e.preventDefault();
     const f = e.target;
     const btn = f.querySelector('button[type="submit"]');
+    const nova = f.nova_senha.value;
+    const conf = f.nova_senha_conf.value;
+    if (nova || conf) {
+      if (nova.length < 10) {
+        showCfg(false, "A nova senha deve ter pelo menos 10 caracteres.");
+        return;
+      }
+      if (nova.toLowerCase() === "geracao2026") {
+        showCfg(false, "Escolha uma senha diferente da senha inicial.");
+        return;
+      }
+      if (nova !== conf) {
+        showCfg(false, "As senhas não coincidem.");
+        return;
+      }
+    }
     btn.disabled = true;
     showCfg(true, "Salvando...");
     try {
-      await window.DNJApi.saveConfig(password, {
+      const payload = {
         nome_evento: f.nome_evento.value.trim(),
         data_evento: f.data_evento.value || null,
         local_evento: f.local_evento.value.trim(),
@@ -366,8 +388,16 @@
           idade_minima: Number(f[`fx_min_${i}`].value),
           idade_maxima: Number(f[`fx_max_${i}`].value),
         })),
-      });
-      data = await window.DNJApi.dashboard(password);
+      };
+      if (nova) payload.nova_senha = nova;
+      await window.DNJApi.saveConfig(adminEmail, password, payload);
+      if (nova) {
+        password = nova;
+        sessionStorage.setItem(KEY, password);
+        f.nova_senha.value = "";
+        f.nova_senha_conf.value = "";
+      }
+      data = await window.DNJApi.dashboard(adminEmail, password);
       paint({ settings: true });
       showCfg(true, "Configurações salvas.");
     } catch (err) {
@@ -478,6 +508,8 @@
   qs("btn-pdf").addEventListener("click", () => exportRows("pdf"));
   qs("btn-logout").addEventListener("click", () => {
     sessionStorage.removeItem(KEY);
+    sessionStorage.removeItem(EMAIL_KEY);
+    sessionStorage.removeItem(NAME_KEY);
     window.location.reload();
   });
 
@@ -498,14 +530,29 @@
   qs("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
-      await window.DNJApi.login(e.target.password.value);
+      const email = e.target.email.value.trim().toLowerCase();
+      const result = await window.DNJApi.login(email, e.target.password.value);
       password = e.target.password.value;
+      adminEmail = email;
+      adminName = result?.nome || "";
       sessionStorage.setItem(KEY, password);
+      sessionStorage.setItem(EMAIL_KEY, adminEmail);
+      sessionStorage.setItem(NAME_KEY, adminName);
       await enter();
     } catch (_) {
       qs("login-error").hidden = false;
-      qs("login-error").textContent = "Senha incorreta.";
+      qs("login-error").textContent = "E-mail ou senha incorretos.";
     }
   });
-  if (password) window.DNJApi.login(password).then(enter).catch(() => sessionStorage.removeItem(KEY));
+  if (password && adminEmail) {
+    window.DNJApi.login(adminEmail, password).then((result) => {
+      adminName = result?.nome || adminName;
+      if (adminName) sessionStorage.setItem(NAME_KEY, adminName);
+      return enter();
+    }).catch(() => {
+      sessionStorage.removeItem(KEY);
+      sessionStorage.removeItem(EMAIL_KEY);
+      sessionStorage.removeItem(NAME_KEY);
+    });
+  }
 })();

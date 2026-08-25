@@ -1,6 +1,8 @@
 (() => {
   const KEY = "dnj2026_admin";
+  const EMAIL_KEY = "dnj2026_admin_email";
   let password = sessionStorage.getItem(KEY) || "";
+  let adminEmail = sessionStorage.getItem(EMAIL_KEY) || "";
   const found = document.getElementById("found");
   let lastCode = "";
 
@@ -20,7 +22,7 @@
   }
 
   async function lookup(code) {
-    const row = await window.DNJApi.getByCode(code);
+    const row = await window.DNJApi.adminLookup(adminEmail, password, code);
     if (row.presente) {
       showPerson(row, { title: "CHECK-IN JÁ REALIZADO", body: "<p>Esta inscrição já teve presença registrada.</p>", canConfirm: false });
       return;
@@ -29,7 +31,7 @@
   }
 
   async function confirm(code) {
-    const r = await window.DNJApi.checkin(password, code);
+    const r = await window.DNJApi.checkin(adminEmail, password, code);
     const row = r.inscricao;
     if (r.already) {
       const when = r.checkin?.realizado_em ? new Date(r.checkin.realizado_em).toLocaleString("pt-BR") : "";
@@ -62,13 +64,16 @@
   document.getElementById("gate-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
-      await window.DNJApi.login(e.target.password.value);
+      const email = e.target.email.value.trim().toLowerCase();
+      await window.DNJApi.login(email, e.target.password.value);
       password = e.target.password.value;
+      adminEmail = email;
       sessionStorage.setItem(KEY, password);
+      sessionStorage.setItem(EMAIL_KEY, adminEmail);
       openScan();
     } catch (_) {
       document.getElementById("gate-error").hidden = false;
-      document.getElementById("gate-error").textContent = "Senha incorreta.";
+      document.getElementById("gate-error").textContent = "E-mail ou senha incorretos.";
     }
   });
   document.getElementById("manual").addEventListener("submit", (e) => {
@@ -78,7 +83,10 @@
       found.innerHTML = "<p>Código não encontrado.</p>";
     });
   });
-  if (password) {
-    window.DNJApi.login(password).then(openScan).catch(() => sessionStorage.removeItem(KEY));
+  if (password && adminEmail) {
+    window.DNJApi.login(adminEmail, password).then(openScan).catch(() => {
+      sessionStorage.removeItem(KEY);
+      sessionStorage.removeItem(EMAIL_KEY);
+    });
   }
 })();

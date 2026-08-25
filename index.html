@@ -103,6 +103,8 @@
       </p>
       <p class="citation">Lc 5,37</p>
 
+      <div class="hero-divider" aria-hidden="true"><span></span></div>
+
       <div class="meta">
         <p class="meta-date">18 DE OUTUBRO</p>
         <p class="meta-time">Saída às 7h da manhã</p>
@@ -113,12 +115,13 @@
         <div class="countdown" id="countdown" aria-label="Contagem para a saída às 7h"></div>
       </div>
 
-      <button type="button" class="btn-cta" id="btn-start">
-        <span class="btn-cta-fill"></span>
-        <span class="btn-cta-label">QUERO PARTICIPAR</span>
-      </button>
-      <button type="button" class="btn-ghost" id="btn-lookup">Consultar inscrição</button>
-      <button type="button" class="btn-ghost" id="btn-mine" hidden>Minha inscrição</button>
+      <div class="hero-actions">
+        <button type="button" class="btn-cta" id="btn-start">
+          <span class="btn-cta-fill"></span>
+          <span class="btn-cta-label">QUERO PARTICIPAR</span>
+        </button>
+        <button type="button" class="btn-link" id="btn-lookup">Consultar inscrição</button>
+      </div>
       <p class="cta-hint">Saímos às 7h. Uma inscrição. Um encontro.</p>
     </div>
   </section>
@@ -434,6 +437,10 @@
       <label class="field">
         <span>Código ou WhatsApp</span>
         <input type="text" name="codigo" required maxlength="20" placeholder="DNJ26-… ou (21) 99999-9999" />
+      </label>
+      <label class="field">
+        <span>Data de nascimento</span>
+        <input type="date" name="nascimento" required />
       </label>
       <p class="form-error" id="lookup-error" hidden></p>
       <button type="submit" class="btn-cta"><span class="btn-cta-fill"></span><span class="btn-cta-label">BUSCAR</span></button>

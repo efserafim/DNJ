@@ -27,10 +27,20 @@ function Get-Age([string]$nasc) {
   return [int]$age
 }
 
+function New-AdminPassword { return "geracao2026" }
+
+function Test-AdminEmail($db, [string]$email) {
+  if (-not $email) { return $false }
+  $norm = $email.Trim().ToLower()
+  return @(Arr $db.administradores) | Where-Object {
+    $_.ativo -ne $false -and ([string]$_.email).Trim().ToLower() -eq $norm
+  } | Select-Object -First 1
+}
+
 function Ensure-Db {
   if (-not (Test-Path $script:DataDir)) { New-Item -ItemType Directory -Path $script:DataDir | Out-Null }
   if (-not (Test-Path $script:CfgFile)) {
-    @{ adminPassword = "geracao2026"; criado_em = (Now-Iso) } | ConvertTo-Json | Set-Content $script:CfgFile -Encoding UTF8
+    @{ adminPassword = (New-AdminPassword); criado_em = (Now-Iso) } | ConvertTo-Json | Set-Content $script:CfgFile -Encoding UTF8
   }
   if (-not (Test-Path $script:DbFile)) { Write-Db (New-Seed) }
   else {
@@ -72,7 +82,12 @@ function New-Seed {
     inscricoes = @()
     checkins = @()
     lista_espera = @()
-    administradores = @([pscustomobject]@{ id=(New-Id); nome="Administrador"; email="admin@dnj.local"; papel="administrador"; ativo=$true })
+    administradores = @(
+      [pscustomobject]@{ id=(New-Id); nome="Beatriz"; email="beatriz@geucaristica.com.br"; papel="coordenador"; ativo=$true }
+      [pscustomobject]@{ id=(New-Id); nome="Lavinia"; email="lavinia@geucaristica.com.br"; papel="administrador"; ativo=$true }
+      [pscustomobject]@{ id=(New-Id); nome="Duda"; email="duda@geucaristica.com.br"; papel="administrador"; ativo=$true }
+      [pscustomobject]@{ id=(New-Id); nome="Joao Gabriel"; email="joaogabriel@geucaristica.com.br"; papel="administrador"; ativo=$true }
+    )
     logs = @()
   }
 }
@@ -235,14 +250,36 @@ function Registrar-Inscricao($body) {
   }
 }
 
-function Public-Lookup($codigo) {
+function Admin-Lookup($codigo) {
   $db = Read-Db
-  $i = Arr $db.inscricoes | Where-Object { $_.codigo_inscricao -eq $codigo -or $_.qr_code -eq $codigo } | Select-Object -First 1
+  $q = [string]$codigo
+  $i = Arr $db.inscricoes | Where-Object {
+    $_.codigo_inscricao -eq $q -or $_.qr_code -eq $q -or $_.id -eq $q
+  } | Select-Object -First 1
   if (-not $i) { return $null }
+  $onibus = Arr $db.onibus | Where-Object { $_.id -eq $i.onibus_id } | Select-Object -First 1
+  $i | Add-Member -NotePropertyName onibus_nome -NotePropertyValue $(if($onibus){$onibus.nome}else{$i.onibus_nome}) -Force
+  return $i
+}
+
+function Public-Lookup($codigo, $nascimento) {
+  $db = Read-Db
+  $q = [string]$codigo
+  $phone = [regex]::Replace($q, "\D", "")
+  $i = $null
+  if ($q -match "^DNJ26" -or $q.Contains("-")) {
+    $i = Arr $db.inscricoes | Where-Object { $_.codigo_inscricao -eq $q -or $_.qr_code -eq $q } | Select-Object -First 1
+  } elseif ($phone.Length -ge 10) {
+    $i = Arr $db.inscricoes | Where-Object {
+      ([regex]::Replace([string]$_.whatsapp, "\D", "")) -eq $phone -and $_.status -ne "cancelada"
+    } | Sort-Object criado_em -Descending | Select-Object -First 1
+  }
+  if (-not $i) { return $null }
+  if (-not $nascimento -or [string]$i.data_nascimento -ne [string]$nascimento) { return $null }
   $onibus = Arr $db.onibus | Where-Object { $_.id -eq $i.onibus_id } | Select-Object -First 1
   return [pscustomobject]@{
     codigo_inscricao=$i.codigo_inscricao; nome_completo=$i.nome_completo; idade=$i.idade
-    status=$i.status; presente=$i.presente; assento=$i.assento
+    status=$i.status; assento=$i.assento
     onibus_nome=$(if($onibus){$onibus.nome}else{$i.onibus_nome})
     faixa_nome=$i.faixa_nome
   }
@@ -385,9 +422,20 @@ function Save-Config($body) {
   return With-Db {
     param($db)
     $cfg = $db.configuracoes
-    foreach ($k in $body.psobject.Properties.Name) { $cfg | Add-Member -NotePropertyName $k -NotePropertyValue $body.$k -Force }
+    foreach ($k in $body.psobject.Properties.Name) {
+      if ($k -eq "nova_senha" -or $k -eq "onibus" -or $k -eq "faixas") { continue }
+      $cfg | Add-Member -NotePropertyName $k -NotePropertyValue $body.$k -Force
+    }
     if ($body.faixas) { $db.faixas_etarias = Arr $body.faixas; Recalcular-Faixas $db }
     if ($body.onibus) { $db.onibus = Arr $body.onibus }
+    if ($body.nova_senha) {
+      $nova = [string]$body.nova_senha
+      if ($nova.Length -lt 10) { throw "Senha fraca: use pelo menos 10 caracteres." }
+      if ($nova.ToLower() -eq "geracao2026") { throw "Senha fraca: escolha outra senha." }
+      $auth = Read-Auth
+      $auth.adminPassword = $nova
+      $auth | ConvertTo-Json | Set-Content $script:CfgFile -Encoding UTF8
+    }
     Add-Log $db "configuracao_alterada" "configuracoes" "evento" $null $cfg
     return $cfg
   }
