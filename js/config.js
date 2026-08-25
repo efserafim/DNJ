@@ -21,7 +21,7 @@ window.DNJ_CONFIG = {
   },
   termoWhatsapp: "5522920050790",
   share: {
-    siteUrl: "https://efserafim.github.io/DNJ",
+    siteUrl: "https://dnj.geucaristica.com.br",
     image: "assets/dnj-2026-oficial.jpg",
     title: "Caravana Geração Eucarística ao DNJ 2026",
     description: "18 de outubro de 2026 · Saída às 7h · Orla do Marine — Maricá. Inscreva-se na caravana da Geração Eucarística.",

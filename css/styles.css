@@ -1182,10 +1182,15 @@ body {
 /* ========== TICKET ========== */
 .ticket {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: min(420px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  max-height: calc(100svh - 24px);
+  margin: auto;
   border: 0;
   border-radius: 24px;
-  padding: 0 0 18px;
+  padding: 0;
   text-align: center;
   background: #fff8ea;
   box-shadow: 0 24px 60px rgba(44, 26, 18, 0.22);
@@ -1199,13 +1204,18 @@ body {
 }
 
 .ticket-card {
-  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   border-radius: 24px 24px 0 0;
 }
 
 .ticket-head {
   position: relative;
-  padding: 18px 20px 22px;
+  padding: 16px 18px 20px;
   background:
     radial-gradient(420px 120px at 50% 0%, rgba(255, 236, 170, 0.35), transparent 70%),
     linear-gradient(180deg, var(--wine-bright), var(--wine));
@@ -1235,8 +1245,16 @@ body {
 }
 
 .ticket-logos .logo-pascom {
-  height: 68px;
-  filter: brightness(1.08);
+  height: 60px;
+}
+
+.ticket-event {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2rem, 8vw, 2.6rem);
+  letter-spacing: 0.08em;
+  line-height: 0.85;
+  color: #fff8ea;
 }
 
 .ticket-org {
@@ -1246,15 +1264,6 @@ body {
   font-size: 0.62rem;
   font-weight: 700;
   color: var(--gold);
-}
-
-.ticket-event {
-  margin: 0;
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 2.6rem;
-  letter-spacing: 0.08em;
-  line-height: 0.85;
-  color: #fff8ea;
 }
 
 .ticket-event span {
@@ -1270,68 +1279,80 @@ body {
 }
 
 .ticket-body {
-  padding: 8px 22px 4px;
-}
-
-.ticket-close {
-  position: absolute;
-  right: 12px;
-  top: 8px;
-  z-index: 2;
-  font-size: 1.6rem;
-  color: #fff8ea;
+  padding: 6px 18px 8px;
 }
 
 .ticket h2 {
-  margin: 12px 0 4px;
+  margin: 8px 0 2px;
   font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+  line-height: 1.2;
 }
 
 .ticket-code {
   font-family: "Bebas Neue", sans-serif;
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
   letter-spacing: 0.1em;
   color: var(--wine);
+  margin: 0 0 4px;
 }
 
 .ticket-qr-wrap {
   display: inline-flex;
-  margin: 8px 0 4px;
-  padding: 10px;
-  border-radius: 16px;
+  margin: 6px 0 2px;
+  padding: 8px;
+  border-radius: 14px;
   background: #fff;
   border: 2px solid var(--gold);
+}
+
+.ticket-qr-wrap img {
+  display: block;
+  width: min(148px, 36vw);
+  height: auto;
+  aspect-ratio: 1;
 }
 
 .ticket-list {
   list-style: none;
   padding: 0;
+  margin: 0 0 8px;
   text-align: left;
-  line-height: 1.7;
+  line-height: 1.45;
 }
 
 .ticket-list li {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
   border-bottom: 1px dashed rgba(107, 28, 40, 0.14);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .ticket-list li:last-child {
   border-bottom: 0;
 }
 
+.ticket-list li span {
+  text-align: right;
+  word-break: break-word;
+  max-width: 58%;
+}
+
 .ticket-list strong {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .ticket-foot {
+  margin: 0 0 10px;
   font-size: 0.82rem;
+  line-height: 1.45;
   color: var(--ink-soft);
 }
 
@@ -1344,8 +1365,30 @@ body {
   background: rgba(196, 92, 38, 0.06);
 }
 
+.ticket > .ticket-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  z-index: 3;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #fff8ea;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+  background: #fff8ea;
+  border-top: 1px solid rgba(196, 92, 38, 0.1);
+}
+
 #lookup {
   padding: 28px 22px 22px;
+  overflow-y: auto;
   border: 1px solid rgba(232, 184, 74, 0.35);
   border-top: 4px solid var(--gold);
 }
@@ -1505,14 +1548,6 @@ button.code:hover {
   font-weight: 700;
 }
 
-.ticket-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 0 16px 4px;
-}
-
 @media print {
   @page {
     size: A4 portrait;
@@ -1531,6 +1566,7 @@ button.code:hover {
     position: static !important;
     inset: auto;
     width: min(420px, 100%);
+    max-height: none;
     margin: 8mm auto;
     padding: 0;
     border: 2px solid #6b1c28;
@@ -1548,6 +1584,7 @@ button.code:hover {
   }
   .ticket-card {
     border-radius: 0;
+    overflow: visible;
   }
   body.print-termo > *:not(#termo) {
     display: none !important;

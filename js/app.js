@@ -177,7 +177,7 @@
         idade: record.idade ?? window.DNJForm.calcAge(data.data_nascimento),
       };
       fillTicket(merged);
-      window.DNJJourney.play(() => show("confirm"));
+      show("confirm");
     } catch (error) {
       window.DNJForm.showError(error?.message || "Não foi possível confirmar agora. Tente de novo em instantes.");
       submit.disabled = false;
