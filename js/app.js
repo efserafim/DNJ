@@ -8,10 +8,22 @@
   const cfg = window.DNJ_CONFIG || {};
   let current = null;
 
+  function closeDialogs() {
+    if (ticket.open) ticket.close();
+    if (lookup.open) lookup.close();
+  }
+
+  function openDialog(dialog) {
+    if (dialog !== ticket && ticket.open) ticket.close();
+    if (dialog !== lookup && lookup.open) lookup.close();
+    if (!dialog.open) dialog.showModal();
+  }
+
   function show(view) {
     hero.hidden = view !== "hero";
     formView.hidden = view !== "form";
     confirmView.hidden = view !== "confirm";
+    if (view === "hero" || view === "form") closeDialogs();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -50,6 +62,7 @@
   }
 
   function fillTicket(record) {
+    if (!record?.codigo_inscricao) return;
     current = record;
     remember(record);
     const wait = record.status === "lista_espera";
@@ -68,9 +81,22 @@
     document.getElementById("ticket-onibus").textContent = record.onibus_nome || "Lista de espera";
     document.getElementById("ticket-assento").textContent = record.assento || "—";
     const qr = document.getElementById("ticket-qr");
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=168x168&data=${encodeURIComponent(record.codigo_inscricao)}`;
-    qr.alt = `QR Code ${record.codigo_inscricao}`;
+    const code = String(record.codigo_inscricao);
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=168x168&data=${encodeURIComponent(code)}`;
+    qr.alt = `QR Code ${code}`;
     window.DNJTermo?.fill(record);
+  }
+
+  function openTicket() {
+    if (!current?.codigo_inscricao) return;
+    openDialog(ticket);
+  }
+
+  function resetLookup() {
+    const form = document.getElementById("lookup-form");
+    form?.reset();
+    document.getElementById("lookup-error").hidden = true;
+    document.getElementById("lookup-result").hidden = true;
   }
 
   function tickCountdown() {
@@ -101,7 +127,8 @@
   }
 
   function printTicket() {
-    ticket.showModal();
+    if (!current?.codigo_inscricao) return;
+    openDialog(ticket);
     setTimeout(() => window.print(), 250);
   }
 
@@ -113,9 +140,12 @@
   document.getElementById("btn-start").addEventListener("click", () => { window.DNJForm.reset(); show("form"); });
   document.getElementById("btn-back-hero").addEventListener("click", () => show("hero"));
   document.getElementById("btn-home").addEventListener("click", () => { show("hero"); loadInscricoesStatus(); });
-  document.getElementById("btn-view").addEventListener("click", () => ticket.showModal());
+  document.getElementById("btn-view").addEventListener("click", openTicket);
   document.getElementById("btn-close-ticket").addEventListener("click", () => ticket.close());
-  document.getElementById("btn-lookup").addEventListener("click", () => lookup.showModal());
+  document.getElementById("btn-lookup").addEventListener("click", () => {
+    resetLookup();
+    openDialog(lookup);
+  });
   document.getElementById("btn-close-lookup").addEventListener("click", () => lookup.close());
   document.getElementById("confirm-code").addEventListener("click", () => copyCode(current?.codigo_inscricao));
   document.getElementById("btn-copy-ticket").addEventListener("click", () => copyCode(current?.codigo_inscricao));

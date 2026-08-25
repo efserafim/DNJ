@@ -1180,7 +1180,11 @@ body {
 }
 
 /* ========== TICKET ========== */
-.ticket {
+dialog.ticket:not([open]) {
+  display: none;
+}
+
+dialog.ticket[open] {
   position: relative;
   display: flex;
   flex-direction: column;
