@@ -1,0 +1,30 @@
+window.DNJ_CONFIG = {
+  apiUrl: "/api",
+  supabaseUrl: "https://bsecdxokosqinfttlojt.supabase.co",
+  supabaseAnonKey: "sb_publishable_FghTWODFZLUW88NoKrTnNg_ifv4jHQw",
+  event: {
+    name: "Caravana Geração Eucarística ao DNJ",
+    dateLabel: "18 de outubro de 2026",
+    departure: "07:00",
+    departureIso: "2026-10-18T07:00:00-03:00",
+    place: "Orla do Marine — Maricá",
+    parish: "Paróquia Santo Antônio — Bacaxá",
+    promoter: "Setor Juventude — Arquidiocese de Niterói",
+    group: "Grupo Jovem Geração Eucarística",
+    verse: "Vinho novo em odres novos",
+    citation: "Lc 5,37",
+  },
+  coordinator: {
+    name: "Ana Beatriz Moreira dos Santos",
+    cpf: "119.876.987-46",
+    role: "Responsável pela caravana",
+  },
+  termoWhatsapp: "5522920050790",
+  share: {
+    siteUrl: "https://efserafim.github.io/DNJ",
+    image: "assets/dnj-2026-oficial.jpg",
+    title: "Caravana Geração Eucarística ao DNJ 2026",
+    description: "18 de outubro de 2026 · Saída às 7h · Orla do Marine — Maricá. Inscreva-se na caravana da Geração Eucarística.",
+    imageAlt: "DNJ 2026 — Caravana Geração Eucarística ao DNJ",
+  },
+};

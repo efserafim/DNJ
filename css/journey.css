@@ -1,0 +1,86 @@
+.journey {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  background: #8ec8e8;
+}
+
+.journey-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.journey-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 42%, transparent 48%, rgba(44, 26, 18, 0.28) 100%),
+    linear-gradient(180deg, rgba(107, 28, 40, 0.12), transparent 18%, transparent 78%, rgba(44, 26, 18, 0.35));
+}
+
+.journey-caption {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  width: min(90vw, 460px);
+  margin: 0;
+  padding: 12px 18px;
+  text-align: center;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  color: var(--ink);
+  background: rgba(248, 238, 220, 0.94);
+  border: 1px solid rgba(232, 184, 74, 0.7);
+  box-shadow: 0 12px 32px rgba(44, 26, 18, 0.22);
+  border-radius: 16px;
+  opacity: 0;
+}
+
+.journey.is-playing .journey-caption {
+  animation: captionIn 12.8s var(--ease) forwards;
+}
+
+@keyframes captionIn {
+  0% { opacity: 0; transform: translate(-50%, 12px); }
+  8% { opacity: 1; transform: translate(-50%, 0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.btn-skip {
+  position: absolute;
+  z-index: 5;
+  right: 16px;
+  top: 16px;
+  color: #fff8ea;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(107, 28, 40, 0.55);
+  border: 1px solid rgba(232, 184, 74, 0.55);
+  text-shadow: none;
+}
+
+.btn-skip:hover {
+  background: rgba(107, 28, 40, 0.8);
+}
+
+.journey.is-exiting {
+  animation: fadeOut 0.45s ease forwards;
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}

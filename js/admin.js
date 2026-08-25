@@ -1,0 +1,511 @@
+(() => {
+  const KEY = "dnj2026_admin";
+  let password = sessionStorage.getItem(KEY) || "";
+  let data = null;
+  let view = "home";
+  let timer = 0;
+  let pendingTransfer = null;
+  let currentBusId = null;
+  const loginView = document.getElementById("login");
+  const dash = document.getElementById("dashboard");
+
+  const qs = (id) => document.getElementById(id);
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+  function when(iso) {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  }
+  function filteredPeople() {
+    const q = (qs("search")?.value || "").toLowerCase();
+    const st = qs("f-status")?.value;
+    const pr = qs("f-presente")?.value;
+    const ob = qs("f-onibus")?.value;
+    const fx = qs("f-faixa")?.value;
+    return (data.inscricoes || []).filter((i) => {
+      const blob = `${i.nome_completo} ${i.codigo_inscricao} ${i.whatsapp} ${i.cidade} ${i.comunidade} ${i.grupo_movimento}`.toLowerCase();
+      if (q && !blob.includes(q)) return false;
+      if (st && i.status !== st) return false;
+      if (pr === "1" && !i.presente) return false;
+      if (pr === "0" && i.presente) return false;
+      if (ob && i.onibus_id !== ob) return false;
+      if (fx && i.faixa_etaria_id !== fx) return false;
+      return true;
+    });
+  }
+
+  function faixaDoOnibus(o) {
+    return (data.faixas || []).find((f) => f.id === o.faixa_etaria_id) || null;
+  }
+  function busOptions(exceptId, selectedId) {
+    return (data.onibus || [])
+      .filter((o) => o.id !== exceptId)
+      .map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${esc(o.nome)}${o.livres <= 0 ? " (lotado)" : ""}</option>`)
+      .join("");
+  }
+  function moveBox(person) {
+    if (person.status === "cancelada") return "";
+    return `<select class="admin-select" aria-label="Mover ${esc(person.nome_completo)}" data-move-sel="${person.id}">
+        <option value="">Mover para…</option>
+        ${busOptions(person.onibus_id)}
+      </select>
+      <button class="btn-admin" data-move="${person.id}" type="button">Mover</button>`;
+  }
+  async function moverInscrito(id, destId) {
+    if (!id || !destId) {
+      if (id && !destId) alert("Escolha o ônibus de destino.");
+      return;
+    }
+    const person = data.inscricoes.find((i) => i.id === id);
+    const dest = data.onibus.find((o) => o.id === destId);
+    if (!person || !dest) return;
+    if (person.onibus_id === destId) return;
+    if (dest.livres <= 0 && person.onibus_id !== destId) {
+      alert(`${dest.nome} está lotado.`);
+      return;
+    }
+    if (!confirm(`Mover ${person.nome_completo} para o ${dest.nome}?`)) return;
+    await window.DNJApi.transfer(password, id, destId);
+    await refresh();
+    if (view === "buses" && currentBusId) openBus(currentBusId);
+  }
+
+  function busCard(o) {
+    const dots = Array.from({ length: Math.min(o.capacidade, 40) }, (_, n) => `<i class="${n < o.ocupados ? "on" : ""}"></i>`).join("");
+    const faixa = faixaDoOnibus(o);
+    return `<article class="bus-card" data-bus="${o.id}" style="background:linear-gradient(160deg, ${o.cor}, #3d1018)">
+      <h3>ÔNIBUS ${String(o.numero).padStart(2, "0")}</h3>
+      <p class="muted">${esc(o.nome)}</p>
+      <p class="muted">${faixa ? esc(faixa.nome) : "Faixa não definida"}</p>
+      <div class="bus-seats">${dots}</div>
+      <p><b>${o.ocupados} / ${o.capacidade}</b> · ${o.livres} livres</p>
+      <div class="bar"><span style="width:${o.percentual}%"></span></div>
+      <span class="chip">${o.percentual}% ocupado</span>
+      <span class="bus-wheel a"></span><span class="bus-wheel b"></span>
+    </article>`;
+  }
+
+  function renderStats() {
+    const s = data.stats;
+    qs("hello").textContent = data.saudacao || "Olá, administrador!";
+    qs("stats").innerHTML = [
+      ["Inscritos", s.total],
+      ["Confirmados", s.confirmadas],
+      ["Presentes", s.presentes],
+      ["Vagas livres", s.vagas],
+      ["Espera", s.espera],
+      ["Hoje", s.hoje],
+    ].map(([l, v]) => `<article class="stat"><b>${v}</b><span>${l}</span></article>`).join("");
+  }
+  function renderBuses() {
+    qs("bus-cards").innerHTML = data.onibus.map((o) => busCard(o)).join("");
+    qs("bus-detail-cards").innerHTML = data.onibus.map((o) => busCard(o)).join("");
+    qs("bus-detail-cards").querySelectorAll(".bus-card").forEach((el) => {
+      el.addEventListener("dragover", (e) => e.preventDefault());
+      el.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData("text/inscricao");
+        const person = data.inscricoes.find((i) => i.id === id);
+        if (!person) return;
+        const dest = data.onibus.find((o) => o.id === el.dataset.bus);
+        pendingTransfer = { id, dest };
+        qs("transfer-text").textContent = `Deseja transferir ${person.nome_completo} para o ${dest.nome}?`;
+        qs("transfer").showModal();
+      });
+    });
+  }
+  function renderMatrix() {
+    const heads = data.onibus.map((o) => `<th>${esc(o.nome)}</th>`).join("");
+    const rows = (data.matriz || []).map((m) => `<tr><th>${esc(m.faixa)}</th>${m.valores.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("");
+    qs("matrix").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Faixa</th>${heads}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  function renderCharts() {
+    const h = (list, max) => list.map((i) => {
+      const t = i.total || 0;
+      const w = max ? Math.max(6, (100 * t) / max) : 0;
+      return `<div class="hbar"><span>${esc(i.nome || i.dia)}</span><em style="width:${w}%;background:${i.cor || "var(--orange)"}"></em><b>${t}</b></div>`;
+    }).join("");
+    const g = data.graficos || {};
+    const maxF = Math.max(1, ...(g.faixas || []).map((x) => x.total));
+    const maxC = Math.max(1, ...(g.cidades || []).map((x) => x.total));
+    const maxD = Math.max(1, ...(g.dias || []).map((x) => x.total));
+    const ck = g.checkins || { presentes: 0, total: 1 };
+    qs("charts").innerHTML = `
+      <article class="chart"><h3>Por faixa etária</h3>${h(g.faixas || [], maxF)}</article>
+      <article class="chart"><h3>Por cidade</h3>${h(g.cidades || [], maxC) || "<p>Sem dados</p>"}</article>
+      <article class="chart"><h3>Por ônibus</h3>${h(data.onibus.map((o) => ({ nome: o.nome, total: o.ocupados, cor: o.cor })), Math.max(1, ...data.onibus.map((o) => o.ocupados)))}</article>
+      <article class="chart"><h3>Check-ins</h3><div class="bar"><span style="width:${ck.total ? (100 * ck.presentes) / ck.total : 0}%"></span></div><p>${ck.presentes} de ${ck.total}</p></article>
+      <article class="chart"><h3>Por dia</h3>${h(g.dias || [], maxD) || "<p>Sem dados</p>"}</article>`;
+  }
+  function renderPeople() {
+    const list = filteredPeople();
+    const count = qs("people-count");
+    if (count) count.textContent = `${list.length} de ${data.inscricoes.length}`;
+    qs("empty").hidden = list.length > 0;
+    const ob = qs("f-onibus").value;
+    const fx = qs("f-faixa").value;
+    qs("f-onibus").innerHTML = `<option value="">Ônibus</option>` + data.onibus.map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`).join("");
+    qs("f-faixa").innerHTML = `<option value="">Faixa etária</option>` + data.faixas.map((f) => `<option value="${f.id}">${esc(f.nome)}</option>`).join("");
+    qs("f-onibus").value = ob;
+    qs("f-faixa").value = fx;
+    const statusClass = (st) => (st === "confirmada" ? "badge-ok" : st === "lista_espera" ? "badge-wait" : "badge-off");
+    qs("rows").innerHTML = list.map((i, n) => `<tr draggable="true" data-id="${i.id}">
+      <td>${n + 1}</td>
+      <td><strong>${esc(i.nome_completo)}</strong></td>
+      <td>${i.idade || "—"}</td>
+      <td>${esc(i.faixa_nome || "—")}</td>
+      <td>${esc(i.onibus_nome || "—")}</td>
+      <td>${esc(i.whatsapp || "—")}</td>
+      <td class="code-cell">${esc(i.codigo_inscricao)}</td>
+      <td><span class="badge ${statusClass(i.status)}">${esc(String(i.status || "").replace("_", " "))}</span></td>
+      <td><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
+      <td class="cell-actions">
+        <div class="row-actions">
+          ${moveBox(i)}
+          ${i.status === "cancelada" ? "" : `<button class="btn-admin" data-cancel="${i.id}" type="button">Cancelar</button>`}
+          <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+        </div>
+      </td>
+    </tr>`).join("");
+    qs("rows").querySelectorAll("tr[draggable]").forEach((tr) => {
+      tr.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/inscricao", tr.dataset.id));
+    });
+  }
+  function renderWait() {
+    const ids = (data.espera || []).map((e) => e.inscricao_id);
+    const people = ids.map((id) => data.inscricoes.find((i) => i.id === id)).filter(Boolean);
+    qs("wait-alert").textContent = people.length ? `${people.length} pessoa(s) aguardando vaga.` : "Lista de espera vazia.";
+    qs("wait-rows").innerHTML = people.length
+      ? people.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.nome_completo)}</td><td>${i.idade || "—"}</td><td class="code-cell">${esc(i.codigo_inscricao)}</td><td>${when(i.criado_em)}</td><td class="cell-actions"><button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button></td></tr>`).join("")
+      : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
+  }
+  function renderSettings() {
+    const c = data.configuracoes || {};
+    const form = qs("cfg-form");
+    form.nome_evento.value = c.nome_evento || "Caravana Geração Eucarística ao DNJ";
+    form.data_evento.value = String(c.data_evento || "").slice(0, 10);
+    form.local_evento.value = c.local_evento || "";
+    form.modo_distribuicao.value = c.modo_distribuicao || "equilibrado_faixa";
+    form.limite_maximo.value = c.limite_maximo ?? "";
+    form.inscricoes_abertas.checked = c.inscricoes_abertas !== false;
+    form.lista_espera_ativa.checked = c.lista_espera_ativa !== false;
+    qs("cfg-buses").innerHTML = data.onibus.map((o, i) => `<div class="cfg-grid">
+      <label class="field"><span>Nome ônibus ${o.numero}</span><input name="bus_nome_${i}" value="${esc(o.nome)}" data-id="${o.id}" /></label>
+      <label class="field"><span>Capacidade</span><input type="number" min="1" name="bus_cap_${i}" value="${o.capacidade}" data-id="${o.id}" /></label>
+      <label class="field"><span>Faixa etária deste ônibus</span>
+        <select name="bus_faixa_${i}">
+          <option value="">Sem faixa definida</option>
+          ${data.faixas.map((fx) => `<option value="${fx.id}" ${fx.id === o.faixa_etaria_id ? "selected" : ""}>${esc(fx.nome)}</option>`).join("")}
+        </select>
+      </label>
+    </div>`).join("");
+    qs("cfg-faixas").innerHTML = data.faixas.map((f, i) => `<div class="cfg-grid">
+      <label class="field"><span>Nome da faixa</span><input name="fx_nome_${i}" value="${esc(f.nome)}" data-id="${f.id}" /></label>
+      <label class="field"><span>Idade mínima</span><input type="number" name="fx_min_${i}" value="${f.idade_minima}" /></label>
+      <label class="field"><span>Idade máxima</span><input type="number" name="fx_max_${i}" value="${f.idade_maxima}" /></label>
+    </div>`).join("");
+  }
+  function openBus(id) {
+    const o = data.onibus.find((b) => b.id === id);
+    if (!o) return;
+    currentBusId = id;
+    const faixa = faixaDoOnibus(o);
+    const seats = [];
+    for (let n = 1; n <= o.capacidade; n += 1) {
+      const p = (o.passageiros || []).find((i) => Number(i.assento) === n);
+      const cls = p ? (p.presente ? "here" : "occ") : "";
+      const title = p ? `${esc(p.nome_completo)} · ${p.idade} anos · ${esc(p.faixa_nome || "")} · ${esc(p.codigo_inscricao)}` : "Disponível";
+      seats.push(`<button class="seat ${cls}" title="${title}" type="button">${p ? esc(p.nome_completo.split(" ")[0]) : n}</button>`);
+    }
+    qs("bus-interior").hidden = false;
+    qs("bus-interior").innerHTML = `<h2>${esc(o.nome)}</h2>
+      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · use Mover para trocar de ônibus</p>
+      <div class="seat-map">${seats.join("")}</div>
+      <div class="table-wrap" style="margin-top:16px"><table>
+        <thead><tr><th>Assento</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>WhatsApp</th><th>Código</th><th>Presença</th><th>Mover</th></tr></thead>
+        <tbody>${(o.passageiros || []).map((p) => `<tr>
+          <td>${p.assento || "—"}</td>
+          <td>${esc(p.nome_completo)}</td>
+          <td>${p.idade}</td>
+          <td>${esc(p.faixa_nome || "")}</td>
+          <td>${esc(p.whatsapp || "")}</td>
+          <td class="code-cell">${esc(p.codigo_inscricao)}</td>
+          <td>${p.presente ? "Sim" : "Não"}</td>
+          <td class="cell-actions"><div class="row-actions">${moveBox(p)}</div></td>
+        </tr>`).join("") || `<tr><td colspan="8" class="empty">Nenhum ocupante neste ônibus.</td></tr>`}</tbody>
+      </table></div>`;
+  }
+
+  function paint(opts = {}) {
+    if (!data) return;
+    renderStats(); renderBuses(); renderMatrix(); renderCharts(); renderPeople(); renderWait();
+    if (view !== "settings" || opts.settings) renderSettings();
+    document.querySelectorAll(".dash-view").forEach((el) => { el.hidden = el.id !== `view-${view}`; });
+    document.querySelectorAll("[data-view]").forEach((btn) => btn.classList.toggle("is-on", btn.dataset.view === view));
+  }
+
+  async function refresh() {
+    data = await window.DNJApi.dashboard(password);
+    paint();
+  }
+
+  function go(name) {
+    view = name;
+    paint({ settings: name === "settings" });
+    if (name === "buses") {
+      if (currentBusId) openBus(currentBusId);
+      else qs("bus-interior").hidden = true;
+    }
+  }
+
+  function showCfg(ok, text) {
+    const box = qs("cfg-msg");
+    if (!box) return;
+    box.hidden = false;
+    box.textContent = text;
+    box.style.color = ok ? "var(--leaf)" : "var(--wine)";
+  }
+
+  document.querySelectorAll("[data-view]").forEach((btn) => btn.addEventListener("click", () => go(btn.dataset.view)));
+  qs("bus-detail-cards").addEventListener("click", (e) => {
+    const card = e.target.closest(".bus-card");
+    if (card) openBus(card.dataset.bus);
+  });
+  qs("bus-interior").addEventListener("click", async (e) => {
+    const mover = e.target.closest("[data-move]");
+    if (!mover) return;
+    const sel = qs("bus-interior").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+    try {
+      await moverInscrito(mover.dataset.move, sel?.value);
+    } catch (err) {
+      alert(err?.message || "Não foi possível mover.");
+    }
+  });
+  qs("search").addEventListener("input", () => renderPeople());
+  ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => qs(id).addEventListener("change", () => renderPeople()));
+
+  qs("rows").addEventListener("click", async (e) => {
+    const check = e.target.closest("[data-check]");
+    const cancel = e.target.closest("[data-cancel]");
+    const del = e.target.closest("[data-del]");
+    try {
+      if (check) { await window.DNJApi.checkin(password, check.dataset.check); await refresh(); }
+      if (cancel && confirm("Cancelar esta inscrição? O assento será liberado, mas o cadastro permanece.")) {
+        await window.DNJApi.update(password, cancel.dataset.cancel, { status: "cancelada" });
+        await refresh();
+      }
+      if (del && confirm(`Excluir ${del.dataset.nome}?\n\nA inscrição some da lista, a vaga do ônibus é liberada e a pessoa pode se inscrever de novo.`)) {
+        await window.DNJApi.remove(password, del.dataset.del);
+        await refresh();
+      }
+      const mover = e.target.closest("[data-move]");
+      if (mover) {
+        const sel = qs("rows").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+        await moverInscrito(mover.dataset.move, sel?.value);
+      }
+    } catch (err) {
+      alert(err?.message || "Não foi possível concluir a ação.");
+    }
+  });
+  qs("wait-rows").addEventListener("click", async (e) => {
+    const del = e.target.closest("[data-del]");
+    if (!del) return;
+    try {
+      if (confirm(`Excluir ${del.dataset.nome} da lista de espera?`)) {
+        await window.DNJApi.remove(password, del.dataset.del);
+        await refresh();
+      }
+    } catch (err) {
+      alert(err?.message || "Não foi possível excluir.");
+    }
+  });
+  qs("btn-promote").addEventListener("click", async () => {
+    try {
+      const r = await window.DNJApi.promover(password, null);
+      alert(r?.alerta || (r ? "Promovido." : "Ninguém na espera ou sem vaga."));
+      await refresh();
+    } catch (err) {
+      alert(err?.message || "Não foi possível promover.");
+    }
+  });
+  qs("transfer-no").addEventListener("click", () => qs("transfer").close());
+  qs("transfer-yes").addEventListener("click", async () => {
+    try {
+      if (pendingTransfer) await window.DNJApi.transfer(password, pendingTransfer.id, pendingTransfer.dest.id);
+      qs("transfer").close();
+      await refresh();
+    } catch (err) {
+      alert(err?.message || "Não foi possível transferir.");
+    }
+  });
+  qs("cfg-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const btn = f.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    showCfg(true, "Salvando...");
+    try {
+      await window.DNJApi.saveConfig(password, {
+        nome_evento: f.nome_evento.value.trim(),
+        data_evento: f.data_evento.value || null,
+        local_evento: f.local_evento.value.trim(),
+        modo_distribuicao: f.modo_distribuicao.value,
+        limite_maximo: f.limite_maximo.value ? Number(f.limite_maximo.value) : null,
+        inscricoes_abertas: f.inscricoes_abertas.checked,
+        lista_espera_ativa: f.lista_espera_ativa.checked,
+        onibus: data.onibus.map((o, i) => ({
+          id: o.id,
+          nome: f[`bus_nome_${i}`].value.trim(),
+          capacidade: Number(f[`bus_cap_${i}`].value),
+          faixa_etaria_id: f[`bus_faixa_${i}`].value || null,
+        })),
+        faixas: data.faixas.map((fx, i) => ({
+          id: fx.id,
+          nome: f[`fx_nome_${i}`].value.trim(),
+          idade_minima: Number(f[`fx_min_${i}`].value),
+          idade_maxima: Number(f[`fx_max_${i}`].value),
+        })),
+      });
+      data = await window.DNJApi.dashboard(password);
+      paint({ settings: true });
+      showCfg(true, "Configurações salvas.");
+    } catch (err) {
+      showCfg(false, err?.message || "Não foi possível salvar. Tente de novo.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function exportRows(kind) {
+    const list = filteredPeople();
+    const rows = list.map((i) => ({
+      codigo: i.codigo_inscricao, nome: i.nome_completo, idade: i.idade, faixa: i.faixa_nome,
+      onibus: i.onibus_nome, whatsapp: i.whatsapp, cidade: i.cidade, status: i.status, presente: i.presente ? "sim" : "nao",
+    }));
+    if (kind === "csv") {
+      const header = Object.keys(rows[0] || { codigo: "", nome: "" }).join(",");
+      const body = rows.map((r) => Object.values(r).map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + header + "\n" + body], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "dnj-2026.csv";
+      a.click();
+      return;
+    }
+    if (kind === "xlsx" && window.XLSX) {
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(rows), "Inscritos");
+      window.XLSX.writeFile(wb, "dnj-2026.xlsx");
+      return;
+    }
+    const stamp = new Date().toLocaleString("pt-BR", { dateStyle: "long", timeStyle: "short" });
+    const bodyRows = rows.length
+      ? rows.map((r) => `<tr>
+          <td class="code">${esc(r.codigo)}</td>
+          <td>${esc(r.nome)}</td>
+          <td>${esc(r.idade)}</td>
+          <td>${esc(r.faixa)}</td>
+          <td>${esc(r.onibus)}</td>
+          <td>${esc(r.whatsapp)}</td>
+          <td>${esc(r.cidade)}</td>
+          <td>${esc(r.status)}</td>
+          <td>${esc(r.presente)}</td>
+        </tr>`).join("")
+      : `<tr><td colspan="9" class="empty">Nenhum inscrito neste filtro.</td></tr>`;
+    const win = window.open("", "_blank");
+    win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Caravana Geração Eucarística ao DNJ · Inscritos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,600;1,500&family=Great+Vibes&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--cream:#f6ead2;--orange:#c45c26;--wine:#6b1c28;--gold:#e8b84a;--ink:#2c1a12;--ink-soft:#5a3d2e}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--cream);color:var(--ink);font-family:Outfit,system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet{min-height:100vh;display:flex;flex-direction:column}
+  header{padding:28px 32px 20px;background:linear-gradient(180deg,#8b1e2d,#6b1c28);color:#f8eedc;border-bottom:4px solid var(--gold)}
+  .org{margin:0;letter-spacing:.16em;text-transform:uppercase;font-size:.68rem;color:var(--gold);font-weight:700}
+  h1{margin:4px 0 0;font-family:"Bebas Neue",sans-serif;font-size:3rem;letter-spacing:.08em;line-height:.85}
+  h1 span{color:var(--gold)}
+  .verse{margin:8px 0 0;font-family:"Cormorant Garamond",serif;font-style:italic;color:#f5c84c}
+  .meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 32px;background:rgba(255,248,234,.7);border-bottom:1px solid rgba(196,92,38,.15);font-size:.88rem;color:var(--ink-soft)}
+  .meta b{color:var(--orange);font-family:"Bebas Neue",sans-serif;letter-spacing:.06em;font-size:1.15rem;font-weight:400}
+  main{flex:1;padding:18px 24px 32px}
+  table{width:100%;border-collapse:collapse;background:#fff8ea;border-radius:12px;overflow:hidden}
+  th{background:var(--wine);color:#f8eedc;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:10px 8px;text-align:left}
+  td{padding:9px 8px;border-bottom:1px solid rgba(196,92,38,.12);font-size:.84rem}
+  tr:nth-child(even) td{background:rgba(245,200,76,.1)}
+  td.code{font-family:"Bebas Neue",sans-serif;letter-spacing:.06em;color:var(--wine);font-size:1rem}
+  td.empty{text-align:center;padding:28px;color:var(--ink-soft)}
+  footer{margin-top:auto;background:linear-gradient(180deg,#8b1e2d,#6b1c28);color:#f8eedc;padding:18px 32px 14px;border-top:3px solid var(--gold)}
+  .foot-grid{display:grid;grid-template-columns:1.2fr 1fr 1.4fr;gap:16px;font-size:.82rem}
+  .foot-kicker{margin:0;font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.08em;color:var(--gold)}
+  .script{margin:0;font-family:"Great Vibes",cursive;font-size:1.6rem;color:#f5c84c}
+  .contacts{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  .contacts span{display:block;opacity:.75;font-size:.72rem}
+  .bar{margin:14px -32px -14px;padding:8px 32px;text-align:center;font-size:.72rem;letter-spacing:.08em;background:#3d1018}
+  @media print{@page{size:A4 landscape;margin:8mm} header,footer,.meta{break-inside:avoid} tr{break-inside:avoid}}
+</style></head><body><div class="sheet">
+<header>
+  <p class="org">Caravana Geração Eucarística ao DNJ · Santo Antônio — Bacaxá</p>
+  <h1>DNJ <span>2026</span></h1>
+  <p class="verse">“Vinho novo em odres novos” · Lc 5,37</p>
+</header>
+<div class="meta"><span><b>Lista de inscritos</b><br>18 de outubro de 2026 · Orla do Marine — Maricá</span><span>Gerado em ${esc(stamp)}<br>${rows.length} registro(s)</span></div>
+<main><table>
+  <thead><tr><th>Código</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>Ônibus</th><th>WhatsApp</th><th>Cidade</th><th>Status</th><th>Presente</th></tr></thead>
+  <tbody>${bodyRows}</tbody>
+</table></main>
+<footer>
+  <div class="foot-grid">
+    <div><p class="foot-kicker">Caravana ao DNJ</p><p class="script">novos.</p></div>
+    <div>Paróquia Santo Antônio — Bacaxá<br>Saquarema/RJ</div>
+    <div class="contacts">
+      <div><span>Beatriz Moreira</span>22 92005-0790</div>
+      <div><span>Maria Eduarda Alves</span>22 99287-5757</div>
+      <div><span>João Gabriel</span>22 99738-4117</div>
+      <div><span>Lavínia</span>22 99818-7602</div>
+    </div>
+  </div>
+  <p class="bar">Setor Juventude — Arquidiocese de Niterói · DNJ 2026</p>
+</footer>
+</div>
+<script>setTimeout(function(){window.print();},400);</script>
+</body></html>`);
+    win.document.close();
+  }
+  qs("btn-csv").addEventListener("click", () => exportRows("csv"));
+  qs("btn-xlsx").addEventListener("click", () => exportRows("xlsx"));
+  qs("btn-pdf").addEventListener("click", () => exportRows("pdf"));
+  qs("btn-logout").addEventListener("click", () => {
+    sessionStorage.removeItem(KEY);
+    window.location.reload();
+  });
+
+  async function enter() {
+    loginView.hidden = true;
+    dash.hidden = false;
+    await refresh();
+    clearInterval(timer);
+    timer = setInterval(() => refresh().catch(() => {}), 4000);
+    const s = window.DNJApi.client?.();
+    if (s?.channel) {
+      s.channel("dnj-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "inscricoes" }, () => refresh())
+        .on("postgres_changes", { event: "*", schema: "public", table: "checkins" }, () => refresh())
+        .subscribe();
+    }
+  }
+  qs("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await window.DNJApi.login(e.target.password.value);
+      password = e.target.password.value;
+      sessionStorage.setItem(KEY, password);
+      await enter();
+    } catch (_) {
+      qs("login-error").hidden = false;
+      qs("login-error").textContent = "Senha incorreta.";
+    }
+  });
+  if (password) window.DNJApi.login(password).then(enter).catch(() => sessionStorage.removeItem(KEY));
+})();

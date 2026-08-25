@@ -1,0 +1,19 @@
+# Dados locais (inscrições e senha do admin)
+data/db.json
+data/config.json
+
+# Dependências locais do servidor
+tools/
+
+# Ambiente
+.env
+.env.*
+
+# Sistema
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.cursor/

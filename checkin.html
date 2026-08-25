@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Check-in · Caravana ao DNJ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="admin-body">
+  <section class="admin-login" id="gate">
+    <p class="admin-kicker">Check-in</p>
+    <h1>Caravana ao DNJ</h1>
+    <form id="gate-form">
+      <label class="field"><span>Senha</span><input type="password" name="password" required /></label>
+      <p class="form-error" id="gate-error" hidden></p>
+      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">ABRIR CÂMERA</span></button>
+    </form>
+    <p class="hint">Ou digite o código manualmente depois.</p>
+  </section>
+
+  <section id="scan" hidden style="width:min(520px,calc(100% - 24px));margin:24px auto 80px;text-align:center">
+    <p class="admin-kicker">Validação de QR Code</p>
+    <h1 style="font-family:'Bebas Neue',sans-serif;color:var(--orange)">CHECK-IN</h1>
+    <div id="reader" style="width:100%;border-radius:18px;overflow:hidden"></div>
+    <form id="manual" style="margin-top:16px">
+      <label class="field"><span>Código</span><input name="codigo" placeholder="DNJ26-XXXXXXXX" required /></label>
+      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">BUSCAR</span></button>
+    </form>
+    <article id="found" class="chart" hidden style="margin-top:16px;text-align:left"></article>
+    <p><a class="btn-ghost" href="admin.html">Voltar ao dashboard</a></p>
+  </section>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/checkin.js"></script>
+</body>
+</html>
