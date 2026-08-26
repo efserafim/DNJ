@@ -2,36 +2,63 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#C45C26" />
   <title>Check-in · Caravana ao DNJ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/admin.css" />
 </head>
-<body class="admin-body">
+<body class="admin-body checkin-body">
   <section class="admin-login" id="gate">
     <p class="admin-kicker">Check-in</p>
-    <h1>Caravana ao DNJ</h1>
+    <h1>Validar entradas</h1>
+    <p class="hint">Leitor de QR Code com câmera e lanterna para o credenciamento.</p>
     <form id="gate-form">
       <label class="field"><span>E-mail</span><input type="email" name="email" required autocomplete="username" placeholder="seu@geucaristica.com.br" /></label>
       <label class="field"><span>Senha</span><input type="password" name="password" required autocomplete="current-password" /></label>
       <p class="form-error" id="gate-error" hidden></p>
-      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">ABRIR CÂMERA</span></button>
+      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">ABRIR LEITOR</span></button>
     </form>
-    <p class="hint">Ou digite o código manualmente depois.</p>
+    <p class="hint">Também dá para digitar o código se a câmera falhar.</p>
+    <p class="hint"><a href="admin.html">Voltar ao dashboard</a></p>
   </section>
 
-  <section id="scan" hidden style="width:min(520px,calc(100% - 24px));margin:24px auto 80px;text-align:center">
-    <p class="admin-kicker">Validação de QR Code</p>
-    <h1 style="font-family:'Bebas Neue',sans-serif;color:var(--orange)">CHECK-IN</h1>
-    <div id="reader" style="width:100%;border-radius:18px;overflow:hidden"></div>
-    <form id="manual" style="margin-top:16px">
-      <label class="field"><span>Código</span><input name="codigo" placeholder="DNJ26-XXXXXXXX" required /></label>
+  <section id="scan" class="checkin-scan" hidden>
+    <header class="checkin-head">
+      <p class="admin-kicker">Credenciamento</p>
+      <h1>CHECK-IN</h1>
+      <p class="checkin-sub">Aponte a câmera para o QR do ingresso</p>
+    </header>
+
+    <div class="checkin-stage">
+      <div id="reader" class="checkin-reader" aria-label="Leitor de QR Code"></div>
+      <div class="checkin-frame" aria-hidden="true"></div>
+      <div class="checkin-toolbar">
+        <button type="button" class="checkin-tool" id="btn-torch" hidden>
+          <span class="checkin-tool-icon" aria-hidden="true">🔦</span>
+          <span id="torch-label">Lanterna</span>
+        </button>
+        <button type="button" class="checkin-tool" id="btn-switch" hidden>
+          <span class="checkin-tool-icon" aria-hidden="true">🔄</span>
+          Trocar câmera
+        </button>
+      </div>
+      <p class="checkin-cam-error" id="cam-error" hidden></p>
+    </div>
+
+    <form id="manual" class="checkin-manual">
+      <label class="field">
+        <span>Ou digite o código</span>
+        <input name="codigo" placeholder="DNJ26-XXXXXXXX" autocomplete="off" required />
+      </label>
       <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">BUSCAR</span></button>
     </form>
-    <article id="found" class="chart" hidden style="margin-top:16px;text-align:left"></article>
-    <p><a class="btn-ghost" href="admin.html">Voltar ao dashboard</a></p>
+
+    <article id="found" class="checkin-result" hidden></article>
+    <p class="checkin-links"><a class="btn-ghost" href="admin.html">Voltar ao dashboard</a></p>
   </section>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>

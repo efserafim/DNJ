@@ -12,7 +12,8 @@ values
   ('Beatriz', 'beatriz@geucaristica.com.br', 'coordenador'),
   ('Lavínia', 'lavinia@geucaristica.com.br', 'administrador'),
   ('Duda', 'duda@geucaristica.com.br', 'administrador'),
-  ('João Gabriel', 'joaogabriel@geucaristica.com.br', 'administrador')
+  ('João Gabriel', 'joaogabriel@geucaristica.com.br', 'administrador'),
+  ('Eduardo', 'eduardo@geucaristica.com.br', 'administrador')
 on conflict (email) do update set
   nome = excluded.nome,
   papel = excluded.papel,

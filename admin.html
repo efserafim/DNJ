@@ -31,6 +31,7 @@
   </section>
 
   <section id="dashboard" hidden>
+    <p class="form-error dash-load-error" id="dash-error" hidden></p>
     <header class="dash-head">
       <div class="dash-brand">
         <p class="admin-kicker" id="hello">Bom dia, administrador!</p>
@@ -188,8 +189,8 @@
     </div>
   </section>
 
-  <dialog id="transfer" class="ticket">
-    <p class="ticket-event">Transferir passageiro</p>
+  <dialog id="transfer" class="admin-dialog">
+    <p class="admin-kicker">Transferir passageiro</p>
     <p id="transfer-text"></p>
     <div class="form-nav">
       <button class="btn-ghost" id="transfer-no" type="button">Cancelar</button>
@@ -203,6 +204,7 @@
     <button data-view="people" type="button">Lista</button>
     <button data-view="wait" type="button">Espera</button>
     <button data-view="settings" type="button">Ajustes</button>
+    <a href="checkin.html">Check-in</a>
     <a href="index.html" class="mobile-site-link">Site</a>
   </nav>
 

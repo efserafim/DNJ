@@ -46,6 +46,13 @@ function Ensure-Db {
   else {
     $db = Read-Db
     if (-not $db.onibus -or (Arr $db.onibus).Count -eq 0) { Write-Db (New-Seed) }
+    else {
+      $hasEduardo = @(Arr $db.administradores) | Where-Object { ([string]$_.email).Trim().ToLower() -eq "eduardo@geucaristica.com.br" }
+      if (-not $hasEduardo) {
+        $db.administradores = @(Arr $db.administradores) + @([pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true })
+        Write-Db $db
+      }
+    }
   }
 }
 
@@ -87,6 +94,7 @@ function New-Seed {
       [pscustomobject]@{ id=(New-Id); nome="Lavinia"; email="lavinia@geucaristica.com.br"; papel="administrador"; ativo=$true }
       [pscustomobject]@{ id=(New-Id); nome="Duda"; email="duda@geucaristica.com.br"; papel="administrador"; ativo=$true }
       [pscustomobject]@{ id=(New-Id); nome="Joao Gabriel"; email="joaogabriel@geucaristica.com.br"; papel="administrador"; ativo=$true }
+      [pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true }
     )
     logs = @()
   }

@@ -91,22 +91,23 @@
   }
 
   function renderStats() {
-    const s = data.stats;
+    const s = data.stats || {};
     const hour = new Date().getHours();
     const greet = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
     qs("hello").textContent = adminName ? `${greet}, ${adminName}!` : (data.saudacao || "Olá, administrador!");
     qs("stats").innerHTML = [
-      ["Inscritos", s.total],
-      ["Confirmados", s.confirmadas],
-      ["Presentes", s.presentes],
-      ["Vagas livres", s.vagas],
-      ["Espera", s.espera],
-      ["Hoje", s.hoje],
+      ["Inscritos", s.total ?? 0],
+      ["Confirmados", s.confirmadas ?? 0],
+      ["Presentes", s.presentes ?? 0],
+      ["Vagas livres", s.vagas ?? 0],
+      ["Espera", s.espera ?? 0],
+      ["Hoje", s.hoje ?? 0],
     ].map(([l, v]) => `<article class="stat"><b>${v}</b><span>${l}</span></article>`).join("");
   }
   function renderBuses() {
-    qs("bus-cards").innerHTML = data.onibus.map((o) => busCard(o)).join("");
-    qs("bus-detail-cards").innerHTML = data.onibus.map((o) => busCard(o)).join("");
+    const buses = data.onibus || [];
+    qs("bus-cards").innerHTML = buses.map((o) => busCard(o)).join("") || "<p class='empty'>Nenhum ônibus cadastrado.</p>";
+    qs("bus-detail-cards").innerHTML = buses.map((o) => busCard(o)).join("");
     qs("bus-detail-cards").querySelectorAll(".bus-card").forEach((el) => {
       el.addEventListener("dragover", (e) => e.preventDefault());
       el.addEventListener("drop", (e) => {
@@ -122,7 +123,7 @@
     });
   }
   function renderMatrix() {
-    const heads = data.onibus.map((o) => `<th>${esc(o.nome)}</th>`).join("");
+    const heads = (data.onibus || []).map((o) => `<th>${esc(o.nome)}</th>`).join("");
     const rows = (data.matriz || []).map((m) => `<tr><th>${esc(m.faixa)}</th>${m.valores.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("");
     qs("matrix").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Faixa</th>${heads}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
@@ -133,14 +134,16 @@
       return `<div class="hbar"><span>${esc(i.nome || i.dia)}</span><em style="width:${w}%;background:${i.cor || "var(--orange)"}"></em><b>${t}</b></div>`;
     }).join("");
     const g = data.graficos || {};
-    const maxF = Math.max(1, ...(g.faixas || []).map((x) => x.total));
-    const maxC = Math.max(1, ...(g.cidades || []).map((x) => x.total));
-    const maxD = Math.max(1, ...(g.dias || []).map((x) => x.total));
+    const buses = data.onibus || [];
+    const maxF = Math.max(1, ...(g.faixas || []).map((x) => x.total), 0);
+    const maxC = Math.max(1, ...(g.cidades || []).map((x) => x.total), 0);
+    const maxD = Math.max(1, ...(g.dias || []).map((x) => x.total), 0);
     const ck = g.checkins || { presentes: 0, total: 1 };
+    const maxB = Math.max(1, ...buses.map((o) => o.ocupados || 0), 0);
     qs("charts").innerHTML = `
       <article class="chart"><h3>Por faixa etária</h3>${h(g.faixas || [], maxF)}</article>
       <article class="chart"><h3>Por cidade</h3>${h(g.cidades || [], maxC) || "<p>Sem dados</p>"}</article>
-      <article class="chart"><h3>Por ônibus</h3>${h(data.onibus.map((o) => ({ nome: o.nome, total: o.ocupados, cor: o.cor })), Math.max(1, ...data.onibus.map((o) => o.ocupados)))}</article>
+      <article class="chart"><h3>Por ônibus</h3>${h(buses.map((o) => ({ nome: o.nome, total: o.ocupados, cor: o.cor })), maxB)}</article>
       <article class="chart"><h3>Check-ins</h3><div class="bar"><span style="width:${ck.total ? (100 * ck.presentes) / ck.total : 0}%"></span></div><p>${ck.presentes} de ${ck.total}</p></article>
       <article class="chart"><h3>Por dia</h3>${h(g.dias || [], maxD) || "<p>Sem dados</p>"}</article>`;
   }
@@ -245,8 +248,14 @@
 
   function paint(opts = {}) {
     if (!data) return;
-    renderStats(); renderBuses(); renderMatrix(); renderCharts(); renderPeople(); renderWait();
-    if (view !== "settings" || opts.settings) renderSettings();
+    const run = (fn) => { try { fn(); } catch (err) { console.error(err); } };
+    run(renderStats);
+    run(renderBuses);
+    run(renderMatrix);
+    run(renderCharts);
+    run(renderPeople);
+    run(renderWait);
+    if (view !== "settings" || opts.settings) run(renderSettings);
     document.querySelectorAll(".dash-view").forEach((el) => { el.hidden = el.id !== `view-${view}`; });
     document.querySelectorAll("[data-view]").forEach((btn) => btn.classList.toggle("is-on", btn.dataset.view === view));
   }
@@ -510,21 +519,36 @@
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem(EMAIL_KEY);
     sessionStorage.removeItem(NAME_KEY);
+    document.body.classList.remove("dash-on");
     window.location.reload();
   });
 
   async function enter() {
-    loginView.hidden = true;
-    dash.hidden = false;
-    await refresh();
-    clearInterval(timer);
-    timer = setInterval(() => refresh().catch(() => {}), 4000);
-    const s = window.DNJApi.client?.();
-    if (s?.channel) {
-      s.channel("dnj-live")
-        .on("postgres_changes", { event: "*", schema: "public", table: "inscricoes" }, () => refresh())
-        .on("postgres_changes", { event: "*", schema: "public", table: "checkins" }, () => refresh())
-        .subscribe();
+    const errBox = qs("login-error");
+    const dashErr = qs("dash-error");
+    if (dashErr) dashErr.hidden = true;
+    try {
+      await refresh();
+      loginView.hidden = true;
+      dash.hidden = false;
+      document.body.classList.add("dash-on");
+      clearInterval(timer);
+      timer = setInterval(() => refresh().catch(() => {}), 4000);
+      const s = window.DNJApi.client?.();
+      if (s?.channel) {
+        s.channel("dnj-live")
+          .on("postgres_changes", { event: "*", schema: "public", table: "inscricoes" }, () => refresh())
+          .on("postgres_changes", { event: "*", schema: "public", table: "checkins" }, () => refresh())
+          .subscribe();
+      }
+    } catch (err) {
+      loginView.hidden = false;
+      dash.hidden = true;
+      document.body.classList.remove("dash-on");
+      if (errBox) {
+        errBox.hidden = false;
+        errBox.textContent = err?.message || "Não foi possível carregar o dashboard. Confira a conexão e tente de novo.";
+      }
     }
   }
   qs("login-form").addEventListener("submit", async (e) => {
