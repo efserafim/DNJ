@@ -84,11 +84,22 @@
     found.innerHTML = `<p class="admin-kicker">Não encontrado</p><p>${message}</p>`;
   }
 
+  function extractCode(text) {
+    const raw = String(text || "").trim();
+    if (!raw) return "";
+    const match = raw.toUpperCase().match(/DNJ26-[A-Z0-9]+/);
+    return match ? match[0] : raw.toUpperCase();
+  }
+
   async function lookup(code) {
-    if (busy) return;
+    const value = extractCode(code);
+    if (!value || busy) return;
     busy = true;
+    found.hidden = false;
+    found.className = "checkin-result";
+    found.innerHTML = `<p class="admin-kicker">Lendo</p><p>Código ${value}…</p>`;
     try {
-      const row = await window.DNJApi.adminLookup(adminEmail, password, code);
+      const row = await window.DNJApi.adminLookup(adminEmail, password, value);
       if (row.presente) {
         showPerson(row, { title: "CHECK-IN JÁ REALIZADO", body: "<p>Esta inscrição já teve presença registrada.</p>", canConfirm: false, warn: true });
         return;
@@ -123,10 +134,10 @@
   }
 
   function onScan(text) {
-    const code = String(text || "").trim().toUpperCase();
+    const code = extractCode(text);
     if (!code) return;
     const now = Date.now();
-    if (code === lastCode && now - lastAt < 4000) return;
+    if (code === lastCode && now - lastAt < 2500) return;
     lastCode = code;
     lastAt = now;
     lookup(code);
@@ -134,8 +145,46 @@
 
   async function stopScanner() {
     if (!scanner) return;
-    try { await scanner.stop(); } catch (_) {}
-    try { scanner.clear(); } catch (_) {}
+    const old = scanner;
+    scanner = null;
+    try { await old.stop(); } catch (_) {}
+    try { old.clear(); } catch (_) {}
+  }
+
+  function waitFrame() {
+    return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }
+
+  async function waitForLibrary() {
+    if (window.Html5Qrcode) return true;
+    for (let i = 0; i < 40; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      if (window.Html5Qrcode) return true;
+    }
+    return false;
+  }
+
+  function scanConfig() {
+    return {
+      fps: 16,
+      qrbox: (width, height) => {
+        const min = Math.min(width, height);
+        const size = Math.max(180, Math.floor((min || 240) * 0.72));
+        const edge = Math.min(size, min || size);
+        return { width: edge, height: edge };
+      },
+      disableFlip: false,
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    };
+  }
+
+  function armVideo() {
+    const video = document.querySelector("#reader video");
+    if (!video) return;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("muted", "true");
+    video.muted = true;
+    video.playsInline = true;
   }
 
   // A capacidade de lanterna só aparece alguns instantes depois do vídeo ficar ativo.
@@ -168,7 +217,7 @@
   }
 
   async function startCamera(preferredId) {
-    if (!window.Html5Qrcode) {
+    if (!(await waitForLibrary())) {
       camLoading.hidden = true;
       camError.hidden = false;
       camError.textContent = "Não foi possível carregar o leitor de QR.";
@@ -182,36 +231,38 @@
     torchLabel.textContent = "Lanterna";
 
     await stopScanner();
-    scanner = new window.Html5Qrcode("reader", { verbose: false });
+    await waitFrame();
 
-    const config = {
-      fps: 12,
-      qrbox: (w, h) => {
-        const edge = Math.floor(Math.min(w, h) * 0.7);
-        return { width: edge, height: edge };
-      },
-      aspectRatio: 1.333,
-      disableFlip: false,
-    };
+    const reader = document.getElementById("reader");
+    if (reader) reader.replaceChildren();
+    scanner = new window.Html5Qrcode("reader", { verbose: false });
+    const config = scanConfig();
+
+    const tryStart = (camera) => scanner.start(camera, config, onScan);
 
     try {
-      await scanner.start(preferredId || { facingMode: "environment" }, config, onScan);
-    } catch (_) {
-      try {
-        // Só aqui vale pagar o custo de enumerar câmeras abrindo um stream extra.
-        const list = await window.Html5Qrcode.getCameras();
-        const back = list.find((c) => /back|rear|traseira|environment/i.test(c.label || ""));
-        const id = back?.id || list[list.length - 1]?.id;
-        if (!id) throw new Error("sem camera");
-        await scanner.start(id, config, onScan);
-      } catch (err) {
-        camLoading.hidden = true;
-        camError.hidden = false;
-        camError.textContent = "Permita o acesso à câmera para ler o QR Code. Você ainda pode digitar o código abaixo.";
-        return;
+      if (preferredId) {
+        await tryStart(preferredId);
+      } else {
+        try {
+          await tryStart({ facingMode: "environment" });
+        } catch (_) {
+          const list = await window.Html5Qrcode.getCameras();
+          const back = [...list].reverse().find((c) => /back|rear|traseira|environment|posterior/i.test(c.label || ""))
+            || list.find((c) => c.id)
+            || list[list.length - 1];
+          if (!back?.id) throw new Error("sem camera");
+          await tryStart(back.id);
+        }
       }
+    } catch (_) {
+      camLoading.hidden = true;
+      camError.hidden = false;
+      camError.textContent = "Permita o acesso à câmera para ler o QR Code. Você ainda pode digitar o código abaixo.";
+      return;
     }
     camLoading.hidden = true;
+    armVideo();
     watchTorchSupport();
     listCameras();
   }

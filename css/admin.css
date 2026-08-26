@@ -1055,18 +1055,29 @@ body:not(.dash-on) .mobile-nav {
 }
 
 .checkin-reader {
+  position: relative;
   width: 100%;
+  height: min(72vw, 420px);
   min-height: 280px;
   background: #1a100c;
 }
 
-.checkin-reader video,
-.checkin-reader canvas,
-.checkin-reader img {
+/* Só o vídeo pode ocupar o palco. Esticar o canvas interno do html5-qrcode
+   quebra o recorte e o QR nunca é reconhecido. */
+.checkin-reader video {
   width: 100% !important;
-  max-width: 100% !important;
-  border-radius: 0 !important;
+  height: 100% !important;
   object-fit: cover;
+  border-radius: 0 !important;
+}
+
+.checkin-reader canvas {
+  width: auto !important;
+  max-width: none !important;
+}
+
+#qr-shaded-region {
+  display: none !important;
 }
 
 .checkin-loading {

@@ -176,7 +176,9 @@ declare
 begin
   perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes
-  where codigo_inscricao = p_codigo or qr_code = p_codigo or id::text = p_codigo
+  where upper(codigo_inscricao) = upper(trim(p_codigo))
+     or upper(qr_code) = upper(trim(p_codigo))
+     or id::text = trim(p_codigo)
   limit 1;
   if v.id is null then
     raise exception 'not_found';

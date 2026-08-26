@@ -1509,9 +1509,10 @@ dialog.ticket[open] {
 
 .ticket-qr-wrap img {
   display: block;
-  width: min(148px, 36vw);
+  width: min(196px, 52vw);
   height: auto;
   aspect-ratio: 1;
+  image-rendering: pixelated;
 }
 
 .ticket-list {

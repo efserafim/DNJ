@@ -82,7 +82,7 @@
     document.getElementById("ticket-assento").textContent = record.assento || "—";
     const qr = document.getElementById("ticket-qr");
     const code = String(record.codigo_inscricao);
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=168x168&data=${encodeURIComponent(code)}`;
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=H&margin=8&data=${encodeURIComponent(code)}`;
     qr.alt = `QR Code ${code}`;
     window.DNJTermo?.fill(record);
   }
