@@ -120,6 +120,7 @@
     if (/lotado/i.test(raw)) return "Esse ônibus está lotado.";
     if (/not_found/i.test(raw)) return "Inscrição não encontrada.";
     if (/Senha fraca/i.test(raw)) return raw;
+    if (/gen_salt|pgcrypto/i.test(raw)) return "Não foi possível gravar a senha no banco. Rode o SQL de correção no Supabase e tente de novo.";
     if (/unauthorized/i.test(raw)) return "E-mail ou senha incorretos.";
     return raw || "Não foi possível concluir agora. Tente novamente.";
   }

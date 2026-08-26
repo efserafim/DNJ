@@ -4,7 +4,7 @@
 -- 3) Funções internas sem acesso público
 
 update public.configuracoes_evento
-set admin_pin = crypt('geracao2026', gen_salt('bf'))
+set admin_pin = crypt('geracao2026', gen_salt('bf'::text))
 where true;
 
 insert into public.administradores (nome, email, papel)

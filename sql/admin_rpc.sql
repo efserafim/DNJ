@@ -82,7 +82,7 @@ create or replace function public.assert_admin(p_pin text)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_stored text;
@@ -453,7 +453,7 @@ create or replace function public.admin_save_config(p_email text, p_pin text, p 
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare r jsonb;
         v_nova text;
@@ -478,7 +478,7 @@ begin
       raise exception 'Senha fraca: escolha outra senha';
     end if;
     update public.configuracoes_evento set
-      admin_pin = crypt(v_nova, gen_salt('bf')),
+      admin_pin = crypt(v_nova, gen_salt('bf'::text)),
       atualizado_em = now()
     where id in (select c.id from public.configuracoes_evento c);
   end if;
