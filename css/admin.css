@@ -1109,6 +1109,54 @@ body:not(.dash-on) .mobile-nav {
   to { transform: rotate(360deg); }
 }
 
+.checkin-flash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(245, 200, 76, 0.08);
+  opacity: 0;
+}
+
+.checkin-flash.is-on {
+  animation: scan-flash 0.45s ease-out;
+}
+
+.checkin-flash.is-ok {
+  background: rgba(74, 107, 58, 0.55);
+}
+
+.checkin-flash.is-warn {
+  background: rgba(196, 92, 38, 0.5);
+}
+
+@keyframes scan-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.checkin-badge {
+  pointer-events: none;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(74, 107, 58, 0.94);
+  color: #fff8ea;
+  font: 700 0.82rem Outfit, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 20px rgba(26, 16, 12, 0.28);
+}
+
+.checkin-badge.is-warn {
+  background: rgba(139, 30, 45, 0.94);
+}
+
 .checkin-frame {
   pointer-events: none;
   position: absolute;

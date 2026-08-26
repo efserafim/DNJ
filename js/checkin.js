@@ -9,6 +9,8 @@
   const switchBtn = document.getElementById("btn-switch");
   const camError = document.getElementById("cam-error");
   const camLoading = document.getElementById("cam-loading");
+  const flash = document.getElementById("scan-flash");
+  const badge = document.getElementById("scan-badge");
 
   let scanner = null;
   let cameras = [];
@@ -18,6 +20,7 @@
   let lastCode = "";
   let lastAt = 0;
   let busy = false;
+  let audioCtx = null;
 
   function videoTrack() {
     const video = document.querySelector("#reader video");
@@ -47,19 +50,52 @@
     }
   }
 
-  function beep() {
+  function unlockAudio() {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "square";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.05;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.12);
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
     } catch (_) {}
+  }
+
+  function tone(freq, duration, delay = 0) {
+    try {
+      unlockAudio();
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.06, audioCtx.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + delay);
+      osc.stop(audioCtx.currentTime + delay + duration + 0.02);
+    } catch (_) {}
+  }
+
+  function signal(kind) {
+    flash.className = `checkin-flash is-on ${kind === "warn" ? "is-warn" : "is-ok"}`;
+    flash.addEventListener("animationend", () => flash.classList.remove("is-on"), { once: true });
+    if (kind === "warn") {
+      tone(420, 0.12);
+      tone(320, 0.16, 0.14);
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    } else if (kind === "ok") {
+      tone(880, 0.1);
+      tone(1175, 0.16, 0.1);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 90]);
+    } else {
+      tone(980, 0.14);
+      if (navigator.vibrate) navigator.vibrate(70);
+    }
+  }
+
+  function showBadge(text, warn = false) {
+    badge.hidden = false;
+    badge.textContent = text;
+    badge.classList.toggle("is-warn", warn);
   }
 
   function showPerson(row, extra) {
@@ -95,17 +131,25 @@
     const value = extractCode(code);
     if (!value || busy) return;
     busy = true;
+    signal("read");
+    showBadge(`QR lido · ${value}`);
     found.hidden = false;
     found.className = "checkin-result";
-    found.innerHTML = `<p class="admin-kicker">Lendo</p><p>Código ${value}…</p>`;
+    found.innerHTML = `<p class="admin-kicker">QR lido</p><p>Buscando ${value}…</p>`;
+    found.scrollIntoView({ behavior: "smooth", block: "nearest" });
     try {
       const row = await window.DNJApi.adminLookup(adminEmail, password, value);
       if (row.presente) {
+        signal("warn");
+        showBadge("Já registrado", true);
         showPerson(row, { title: "CHECK-IN JÁ REALIZADO", body: "<p>Esta inscrição já teve presença registrada.</p>", canConfirm: false, warn: true });
         return;
       }
-      showPerson(row, { title: "INSCRIÇÃO ENCONTRADA", canConfirm: true, ok: true });
+      showBadge(`Encontrado · ${row.nome_completo}`);
+      showPerson(row, { title: "INSCRIÇÃO ENCONTRADA", body: "<p>Confira os dados e confirme a presença.</p>", canConfirm: true, ok: true });
     } catch (_) {
+      signal("warn");
+      showBadge("Não encontrado", true);
       showError("QR ou código não encontrado. Confira o ingresso.");
     } finally {
       busy = false;
@@ -119,14 +163,18 @@
       const r = await window.DNJApi.checkin(adminEmail, password, code);
       const row = r.inscricao;
       if (r.already) {
+        signal("warn");
+        showBadge("Já registrado", true);
         const when = r.checkin?.realizado_em ? new Date(r.checkin.realizado_em).toLocaleString("pt-BR") : "";
         showPerson(row, { title: "CHECK-IN JÁ REALIZADO", body: `<p>${when}</p>`, canConfirm: false, warn: true });
         return;
       }
-      beep();
-      if (navigator.vibrate) navigator.vibrate(80);
+      signal("ok");
+      showBadge("Presença confirmada");
       showPerson(row, { title: "✓ CHECK-IN REALIZADO", body: "<p>Presença registrada com data e hora.</p>", canConfirm: false, ok: true });
     } catch (_) {
+      signal("warn");
+      showBadge("Falha no registro", true);
       showError("Não foi possível registrar o check-in agora.");
     } finally {
       busy = false;
@@ -299,8 +347,11 @@
     startCamera(cameras[cameraIndex].id);
   });
 
+  document.getElementById("scan").addEventListener("pointerdown", unlockAudio);
+
   document.getElementById("gate-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    unlockAudio();
     try {
       const email = e.target.email.value.trim().toLowerCase();
       await window.DNJApi.login(email, e.target.password.value);
