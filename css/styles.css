@@ -1669,10 +1669,10 @@ button.code:hover {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 10mm;
   }
   html, body {
-    background: #f6ead2 !important;
+    background: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -1683,15 +1683,16 @@ button.code:hover {
     display: block !important;
     position: static !important;
     inset: auto;
-    width: min(420px, 100%);
-    max-height: none;
-    margin: 8mm auto;
-    padding: 0;
-    border: 2px solid #6b1c28;
-    border-radius: 18px;
-    box-shadow: none;
-    background: #fff8ea;
-    overflow: hidden;
+    width: 158mm !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
   }
   #ticket::backdrop {
     display: none;
@@ -1701,8 +1702,124 @@ button.code:hover {
     display: none !important;
   }
   .ticket-card {
-    border-radius: 0;
-    overflow: visible;
+    display: block !important;
+    overflow: visible !important;
+    border: 0.7mm solid #6b1c28;
+    border-radius: 6mm;
+    background: #fff8ea;
+    break-inside: avoid;
+  }
+  .ticket-head {
+    padding: 7mm 9mm 8mm !important;
+    border-radius: 5.3mm 5.3mm 0 0;
+    background: linear-gradient(180deg, #8b1e2d, #6b1c28) !important;
+    color: #f8eedc !important;
+  }
+  .ticket-head::after {
+    height: 4mm;
+    background: radial-gradient(circle at 2.6mm 2mm, #fff8ea 2.4mm, transparent 2.4mm) !important;
+    background-size: 5.2mm 4mm !important;
+    background-position: center bottom !important;
+  }
+  .ticket-logos {
+    margin: 0 0 4mm !important;
+    gap: 8mm;
+  }
+  .ticket-logos .logo-ge {
+    width: 16mm !important;
+    height: 16mm !important;
+  }
+  .ticket-logos .logo-pascom {
+    height: 20mm !important;
+  }
+  .ticket-org {
+    margin: 0 0 3mm !important;
+    font-size: 9.5pt !important;
+    letter-spacing: 0.22em !important;
+    color: #f5c84c !important;
+  }
+  .ticket-head .ticket-event {
+    font-size: 42pt !important;
+    line-height: 0.82 !important;
+  }
+  .ticket-verse {
+    margin: 4mm 0 0 !important;
+    font-size: 15pt !important;
+    color: #f5c84c !important;
+  }
+  .ticket-body {
+    padding: 5mm 9mm 3mm !important;
+  }
+  .ticket h2 {
+    margin: 2mm 0 1mm !important;
+    font-size: 24pt !important;
+  }
+  .ticket-code {
+    margin: 0 !important;
+    font-size: 29pt !important;
+    letter-spacing: 0.14em !important;
+    color: #6b1c28 !important;
+  }
+  .ticket-qr-wrap {
+    margin: 5mm 0 2mm !important;
+    padding: 3.5mm !important;
+    border: 0.7mm solid #e8b84a !important;
+    border-radius: 4mm !important;
+    background: #fff !important;
+  }
+  .ticket-qr-wrap img {
+    width: 46mm !important;
+    height: 46mm !important;
+  }
+  .ticket-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 5mm 0 4mm !important;
+    border-top: 0.3mm dashed rgba(107, 28, 40, 0.35);
+  }
+  .ticket-list li {
+    display: block !important;
+    padding: 3.2mm 5mm !important;
+    border-bottom: 0.3mm dashed rgba(107, 28, 40, 0.28) !important;
+    border-right: 0.3mm dashed rgba(107, 28, 40, 0.28);
+    font-size: 12pt !important;
+    font-weight: 600;
+    text-align: left;
+  }
+  .ticket-list li:nth-child(2n),
+  .ticket-list li:last-child {
+    border-right: 0;
+  }
+  .ticket-list li:last-child {
+    grid-column: 1 / -1;
+  }
+  .ticket-list strong {
+    display: block;
+    margin-bottom: 1.5mm;
+    font-size: 8.5pt !important;
+    letter-spacing: 0.12em;
+    color: #8a6a55 !important;
+  }
+  .ticket-list li span {
+    display: block;
+    max-width: none !important;
+    text-align: left !important;
+  }
+  .ticket-foot {
+    margin: 0 0 4mm !important;
+    padding: 3.5mm 5mm;
+    border-radius: 3mm;
+    background: rgba(232, 184, 74, 0.16);
+    font-size: 10pt !important;
+    color: #5a3d2e !important;
+  }
+  .ticket-parish {
+    padding: 4.5mm 6mm !important;
+    border-radius: 0 0 5.3mm 5.3mm;
+    background: linear-gradient(180deg, #8b1e2d, #6b1c28) !important;
+    color: #f5c84c !important;
+    font-size: 10pt !important;
+    letter-spacing: 0.12em !important;
   }
   body.print-termo > *:not(#termo) {
     display: none !important;
