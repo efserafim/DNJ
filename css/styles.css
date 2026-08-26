@@ -559,6 +559,27 @@ body {
   min-width: 0;
 }
 
+.btn-ticket-link {
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 20px;
+  border: 1.5px solid rgba(232, 184, 74, 0.75);
+  border-radius: 999px;
+  background: rgba(255, 248, 234, 0.72);
+  color: var(--wine);
+  font-family: Outfit, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition: background 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.btn-ticket-link:hover {
+  background: #fff8ea;
+  transform: translateY(-1px);
+}
+
 .btn-link {
   border: 0;
   background: transparent;
@@ -1511,6 +1532,17 @@ dialog.ticket[open] {
 
 #lookup .ticket-close {
   color: var(--ink-soft);
+}
+
+#lookup-result {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(107, 28, 40, 0.18);
+}
+
+#lookup-open-ticket {
+  width: 100%;
+  margin: 14px 0 6px;
 }
 
 #lookup .ticket-event {

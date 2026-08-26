@@ -7,9 +7,16 @@
   <title>Check-in · Caravana ao DNJ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/admin.css" />
+  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/checkin.js"></script>
 </head>
 <body class="admin-body checkin-body">
   <section class="admin-login" id="gate">
@@ -35,6 +42,7 @@
 
     <div class="checkin-stage">
       <div id="reader" class="checkin-reader" aria-label="Leitor de QR Code"></div>
+      <p class="checkin-loading" id="cam-loading">Abrindo a câmera…</p>
       <div class="checkin-frame" aria-hidden="true"></div>
       <div class="checkin-toolbar">
         <button type="button" class="checkin-tool" id="btn-torch" hidden>
@@ -60,11 +68,5 @@
     <article id="found" class="checkin-result" hidden></article>
     <p class="checkin-links"><a class="btn-ghost" href="admin.html">Voltar ao dashboard</a></p>
   </section>
-
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/checkin.js"></script>
 </body>
 </html>

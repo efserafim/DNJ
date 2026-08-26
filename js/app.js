@@ -92,6 +92,21 @@
     openDialog(ticket);
   }
 
+  function showMyTicketShortcut() {
+    const btn = document.getElementById("btn-my-ticket");
+    if (btn) btn.hidden = false;
+    const link = document.getElementById("btn-lookup");
+    if (link) link.textContent = "Consultar outra inscrição";
+  }
+
+  function restoreSaved() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) {}
+    if (!saved?.codigo_inscricao) return;
+    fillTicket(saved);
+    showMyTicketShortcut();
+  }
+
   function resetLookup() {
     const form = document.getElementById("lookup-form");
     form?.reset();
@@ -141,6 +156,8 @@
   document.getElementById("btn-back-hero").addEventListener("click", () => show("hero"));
   document.getElementById("btn-home").addEventListener("click", () => { show("hero"); loadInscricoesStatus(); });
   document.getElementById("btn-view").addEventListener("click", openTicket);
+  document.getElementById("btn-my-ticket").addEventListener("click", openTicket);
+  document.getElementById("lookup-open-ticket").addEventListener("click", openTicket);
   document.getElementById("btn-close-ticket").addEventListener("click", () => ticket.close());
   document.getElementById("btn-lookup").addEventListener("click", () => {
     resetLookup();
@@ -178,6 +195,7 @@
       ].filter(Boolean).join(" · ");
       const lookupTermo = document.getElementById("lookup-termo");
       lookupTermo.hidden = !window.DNJTermo.isMinor(row);
+      showMyTicketShortcut();
     } catch (_) {
       result.hidden = true;
       errorBox.hidden = false;
@@ -207,6 +225,7 @@
         idade: record.idade ?? window.DNJForm.calcAge(data.data_nascimento),
       };
       fillTicket(merged);
+      showMyTicketShortcut();
       show("confirm");
     } catch (error) {
       window.DNJForm.showError(error?.message || "Não foi possível confirmar agora. Tente de novo em instantes.");
@@ -218,5 +237,6 @@
   tickCountdown();
   setInterval(tickCountdown, 1000);
   loadInscricoesStatus();
+  restoreSaved();
   show("hero");
 })();

@@ -8,11 +8,13 @@
   const torchLabel = document.getElementById("torch-label");
   const switchBtn = document.getElementById("btn-switch");
   const camError = document.getElementById("cam-error");
+  const camLoading = document.getElementById("cam-loading");
 
   let scanner = null;
   let cameras = [];
   let cameraIndex = 0;
   let torchOn = false;
+  let torchTimer = 0;
   let lastCode = "";
   let lastAt = 0;
   let busy = false;
@@ -136,13 +138,44 @@
     try { scanner.clear(); } catch (_) {}
   }
 
+  // A capacidade de lanterna só aparece alguns instantes depois do vídeo ficar ativo.
+  function watchTorchSupport() {
+    clearInterval(torchTimer);
+    let tries = 0;
+    torchTimer = setInterval(() => {
+      tries += 1;
+      if (torchSupported()) {
+        torchBtn.hidden = false;
+        clearInterval(torchTimer);
+      } else if (tries >= 16) {
+        clearInterval(torchTimer);
+      }
+    }, 200);
+  }
+
+  // Depois da permissão concedida, listar câmeras não custa outro stream.
+  async function listCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      cameras = devices.filter((d) => d.kind === "videoinput").map((d) => ({ id: d.deviceId, label: d.label }));
+    } catch (_) {
+      cameras = [];
+    }
+    switchBtn.hidden = cameras.length < 2;
+    const activeId = videoTrack()?.getSettings?.().deviceId;
+    const index = cameras.findIndex((c) => c.id && c.id === activeId);
+    if (index >= 0) cameraIndex = index;
+  }
+
   async function startCamera(preferredId) {
     if (!window.Html5Qrcode) {
+      camLoading.hidden = true;
       camError.hidden = false;
       camError.textContent = "Não foi possível carregar o leitor de QR.";
       return;
     }
     camError.hidden = true;
+    camLoading.hidden = false;
     torchOn = false;
     torchBtn.hidden = true;
     torchBtn.classList.remove("is-on");
@@ -159,46 +192,41 @@
       },
       aspectRatio: 1.333,
       disableFlip: false,
-      videoConstraints: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
     };
 
     try {
-      cameras = await window.Html5Qrcode.getCameras();
-    } catch (_) {
-      cameras = [];
-    }
-    switchBtn.hidden = cameras.length < 2;
-
-    const back = cameras.find((c) => /back|rear|traseira|environment/i.test(c.label || ""));
-    const startId = preferredId || back?.id || cameras[cameras.length - 1]?.id;
-
-    try {
-      if (startId) await scanner.start(startId, config, onScan);
-      else await scanner.start({ facingMode: "environment" }, config, onScan);
-      setTimeout(() => {
-        if (torchSupported()) torchBtn.hidden = false;
-      }, 400);
+      await scanner.start(preferredId || { facingMode: "environment" }, config, onScan);
     } catch (_) {
       try {
-        await scanner.start({ facingMode: "environment" }, config, onScan);
-        setTimeout(() => {
-          if (torchSupported()) torchBtn.hidden = false;
-        }, 400);
+        // Só aqui vale pagar o custo de enumerar câmeras abrindo um stream extra.
+        const list = await window.Html5Qrcode.getCameras();
+        const back = list.find((c) => /back|rear|traseira|environment/i.test(c.label || ""));
+        const id = back?.id || list[list.length - 1]?.id;
+        if (!id) throw new Error("sem camera");
+        await scanner.start(id, config, onScan);
       } catch (err) {
+        camLoading.hidden = true;
         camError.hidden = false;
         camError.textContent = "Permita o acesso à câmera para ler o QR Code. Você ainda pode digitar o código abaixo.";
+        return;
       }
     }
+    camLoading.hidden = true;
+    watchTorchSupport();
+    listCameras();
   }
 
   function openScan() {
     document.getElementById("gate").hidden = true;
     document.getElementById("scan").hidden = false;
     startCamera();
+  }
+
+  function closeScan() {
+    clearInterval(torchTimer);
+    stopScanner();
+    document.getElementById("scan").hidden = true;
+    document.getElementById("gate").hidden = false;
   }
 
   torchBtn.addEventListener("click", async () => {
@@ -244,9 +272,14 @@
   });
 
   if (password && adminEmail) {
-    window.DNJApi.login(adminEmail, password).then(openScan).catch(() => {
+    // A câmera não depende da sessão: abre já e valida o login em paralelo.
+    openScan();
+    window.DNJApi.login(adminEmail, password).catch(() => {
       sessionStorage.removeItem(KEY);
       sessionStorage.removeItem(EMAIL_KEY);
+      password = "";
+      adminEmail = "";
+      closeScan();
     });
   }
 })();

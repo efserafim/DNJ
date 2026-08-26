@@ -1009,6 +1009,35 @@ body:not(.dash-on) .mobile-nav {
   object-fit: cover;
 }
 
+.checkin-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: rgba(255, 248, 234, 0.85);
+  font: 600 0.9rem Outfit, sans-serif;
+  letter-spacing: 0.06em;
+  background: #1a100c;
+}
+
+.checkin-loading::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  margin-right: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 184, 74, 0.35);
+  border-top-color: var(--gold);
+  animation: cam-spin 0.7s linear infinite;
+}
+
+@keyframes cam-spin {
+  to { transform: rotate(360deg); }
+}
+
 .checkin-frame {
   pointer-events: none;
   position: absolute;
