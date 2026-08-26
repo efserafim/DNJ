@@ -219,6 +219,8 @@
   function openScan() {
     document.getElementById("gate").hidden = true;
     document.getElementById("scan").hidden = false;
+    const warn = document.getElementById("pwd-warn");
+    if (warn) warn.hidden = String(password || "").trim().toLowerCase() !== "geracao2026";
     startCamera();
   }
 

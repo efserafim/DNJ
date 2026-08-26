@@ -713,10 +713,6 @@ body {
 }
 
 .footer-contacts li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 252, 244, 0.9), rgba(255, 248, 234, 0.72));
   border: 1px solid rgba(196, 92, 38, 0.12);
@@ -729,18 +725,35 @@ body {
   box-shadow: 0 8px 20px rgba(44, 26, 18, 0.08);
 }
 
-.footer-contacts span {
-  font-size: 0.78rem;
-  color: var(--ink-soft);
-}
-
 .footer-contacts a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 12px;
   color: var(--wine);
   text-decoration: none;
-  font-weight: 700;
 }
 
-.footer-contacts a:hover {
+.footer-contacts .wa-glyph {
+  grid-row: 1 / 3;
+  width: 26px;
+  height: 26px;
+  color: #4a6b3a;
+}
+
+.contact-name {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.2;
+}
+
+.contact-phone {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.footer-contacts a:hover .contact-phone {
   color: var(--orange);
 }
 
@@ -1175,7 +1188,9 @@ body {
 }
 
 .confirm-kicker {
-  letter-spacing: 0.28em;
+  letter-spacing: clamp(0.08em, 1.4vw, 0.28em);
+  font-size: clamp(0.74rem, 2.6vw, 0.95rem);
+  text-transform: uppercase;
   color: var(--orange);
   font-weight: 700;
 }
@@ -1199,11 +1214,40 @@ body {
 
 .confirm-meta {
   margin: 18px 0 24px;
-  line-height: 1.6;
-  padding: 12px 14px;
+  padding: 6px 16px;
   border-radius: 16px;
+  text-align: left;
   background: rgba(196, 92, 38, 0.05);
   border: 1px dashed rgba(196, 92, 38, 0.18);
+}
+
+.confirm-meta p {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(196, 92, 38, 0.16);
+  font-size: 0.9rem;
+}
+
+.confirm-meta p:last-child {
+  border-bottom: 0;
+}
+
+.confirm-meta span {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.confirm-meta strong {
+  text-align: right;
+  color: var(--ink);
 }
 
 .confirm-org {
@@ -1234,8 +1278,29 @@ body {
   justify-items: center;
 }
 
+.confirm-actions .btn-cta {
+  width: min(100%, 320px);
+  min-width: 0;
+}
+
 .confirm-actions .btn-ghost {
   min-width: min(100%, 280px);
+}
+
+.confirm-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: min(100%, 380px);
+}
+
+.confirm-actions-row .btn-ghost {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 6px;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
 }
 
 .minor-card {

@@ -12,8 +12,12 @@
   let currentBusId = null;
   let askResolve = null;
   let sort = { key: "criado", dir: "asc" };
+  const DEFAULT_PASSWORD = "geracao2026";
   const loginView = document.getElementById("login");
+  const firstAccess = document.getElementById("first-access");
   const dash = document.getElementById("dashboard");
+
+  const isDefaultPassword = (value) => String(value || "").trim().toLowerCase() === DEFAULT_PASSWORD;
 
   const qs = (id) => document.getElementById(id);
   function esc(value) {
@@ -704,10 +708,25 @@
     window.location.reload();
   });
 
+  function showFirstAccess() {
+    loginView.hidden = true;
+    dash.hidden = true;
+    document.body.classList.remove("dash-on");
+    firstAccess.hidden = false;
+    qs("first-access-error").hidden = true;
+    qs("first-access-form").reset();
+    qs("first-access-form").nova_senha.focus();
+  }
+
   async function enter() {
     const errBox = qs("login-error");
     const dashErr = qs("dash-error");
     if (dashErr) dashErr.hidden = true;
+    if (isDefaultPassword(password)) {
+      showFirstAccess();
+      return;
+    }
+    firstAccess.hidden = true;
     try {
       await refresh();
       loginView.hidden = true;
@@ -734,6 +753,39 @@
       }
     }
   }
+  qs("first-access-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errBox = qs("first-access-error");
+    const btn = form.querySelector('button[type="submit"]');
+    const label = btn.querySelector(".btn-cta-label");
+    const nova = form.nova_senha.value;
+    const conf = form.nova_senha_conf.value;
+    const stop = (text) => {
+      errBox.hidden = false;
+      errBox.textContent = text;
+    };
+    errBox.hidden = true;
+    if (nova.length < 10) return stop("A nova senha deve ter pelo menos 10 caracteres.");
+    if (isDefaultPassword(nova)) return stop("Escolha uma senha diferente da senha inicial.");
+    if (nova !== conf) return stop("As senhas não coincidem.");
+    btn.disabled = true;
+    label.textContent = "SALVANDO…";
+    try {
+      await window.DNJApi.saveConfig(adminEmail, password, { nova_senha: nova });
+      password = nova;
+      sessionStorage.setItem(KEY, password);
+      firstAccess.hidden = true;
+      await enter();
+      toast("Senha atualizada. Avise a coordenação.");
+    } catch (err) {
+      stop(err?.message || "Não foi possível salvar a senha agora. Tente de novo.");
+    } finally {
+      btn.disabled = false;
+      label.textContent = "SALVAR E ENTRAR";
+    }
+  });
+
   qs("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
