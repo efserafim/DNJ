@@ -10,6 +10,8 @@
   let timer = 0;
   let pendingTransfer = null;
   let currentBusId = null;
+  let askResolve = null;
+  let sort = { key: "criado", dir: "asc" };
   const loginView = document.getElementById("login");
   const dash = document.getElementById("dashboard");
 
@@ -21,13 +23,72 @@
     const d = new Date(iso);
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
   }
+
+  function toast(message, kind = "ok") {
+    const box = qs("toasts");
+    if (!box) return;
+    const el = document.createElement("div");
+    el.className = `toast toast-${kind}`;
+    el.textContent = message;
+    box.appendChild(el);
+    setTimeout(() => {
+      el.classList.add("is-out");
+      setTimeout(() => el.remove(), 320);
+    }, 3200);
+  }
+
+  function ask(text, { title = "Confirmar", ok = "CONFIRMAR", danger = false } = {}) {
+    return new Promise((resolve) => {
+      askResolve = resolve;
+      qs("ask-title").textContent = title;
+      qs("ask-text").textContent = text;
+      const yes = qs("ask-yes");
+      yes.querySelector(".btn-cta-label").textContent = ok;
+      yes.classList.toggle("is-danger", danger);
+      qs("ask").showModal();
+    });
+  }
+
+  function closeAsk(value) {
+    const resolve = askResolve;
+    askResolve = null;
+    if (qs("ask").open) qs("ask").close();
+    if (resolve) resolve(value);
+  }
+
+  function waCell(phone) {
+    const raw = String(phone || "").trim();
+    if (!raw) return "—";
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return esc(raw);
+    const full = digits.length <= 11 ? `55${digits}` : digits;
+    return `<a class="wa-link" href="https://wa.me/${full}" target="_blank" rel="noopener">${esc(raw)}</a>`;
+  }
+
+  function stampNow() {
+    const box = qs("dash-updated");
+    if (box) box.textContent = `Atualizado ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+  function sortValue(i) {
+    switch (sort.key) {
+      case "nome": return String(i.nome_completo || "").toLowerCase();
+      case "idade": return Number(i.idade || 0);
+      case "faixa": return String(i.faixa_nome || "").toLowerCase();
+      case "onibus": return String(i.onibus_nome || "").toLowerCase();
+      case "codigo": return String(i.codigo_inscricao || "");
+      case "status": return String(i.status || "");
+      case "presente": return i.presente ? 1 : 0;
+      default: return String(i.criado_em || "");
+    }
+  }
+
   function filteredPeople() {
-    const q = (qs("search")?.value || "").toLowerCase();
+    const q = (qs("search")?.value || "").toLowerCase().trim();
     const st = qs("f-status")?.value;
     const pr = qs("f-presente")?.value;
     const ob = qs("f-onibus")?.value;
     const fx = qs("f-faixa")?.value;
-    return (data.inscricoes || []).filter((i) => {
+    const list = (data.inscricoes || []).filter((i) => {
       const blob = `${i.nome_completo} ${i.codigo_inscricao} ${i.whatsapp} ${i.cidade} ${i.comunidade} ${i.grupo_movimento}`.toLowerCase();
       if (q && !blob.includes(q)) return false;
       if (st && i.status !== st) return false;
@@ -36,6 +97,14 @@
       if (ob && i.onibus_id !== ob) return false;
       if (fx && i.faixa_etaria_id !== fx) return false;
       return true;
+    });
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return list.sort((a, b) => {
+      const x = sortValue(a);
+      const y = sortValue(b);
+      if (x < y) return -dir;
+      if (x > y) return dir;
+      return 0;
     });
   }
 
@@ -58,7 +127,7 @@
   }
   async function moverInscrito(id, destId) {
     if (!id || !destId) {
-      if (id && !destId) alert("Escolha o ônibus de destino.");
+      if (id && !destId) toast("Escolha o ônibus de destino.", "warn");
       return;
     }
     const person = data.inscricoes.find((i) => i.id === id);
@@ -66,13 +135,15 @@
     if (!person || !dest) return;
     if (person.onibus_id === destId) return;
     if (dest.livres <= 0 && person.onibus_id !== destId) {
-      alert(`${dest.nome} está lotado.`);
+      toast(`${dest.nome} está lotado.`, "warn");
       return;
     }
-    if (!confirm(`Mover ${person.nome_completo} para o ${dest.nome}?`)) return;
+    const yes = await ask(`Mover ${person.nome_completo} para o ${dest.nome}?`, { title: "Trocar de ônibus", ok: "MOVER" });
+    if (!yes) return;
     await window.DNJApi.transfer(adminEmail, password, id, destId);
     await refresh();
     if (view === "buses" && currentBusId) openBus(currentBusId);
+    toast(`${person.nome_completo} agora está no ${dest.nome}.`);
   }
 
   function busCard(o) {
@@ -94,15 +165,26 @@
     const s = data.stats || {};
     const hour = new Date().getHours();
     const greet = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+    const cap = s.capacidade ?? 0;
+    const conf = s.confirmadas ?? 0;
+    const pres = s.presentes ?? 0;
     qs("hello").textContent = adminName ? `${greet}, ${adminName}!` : (data.saudacao || "Olá, administrador!");
     qs("stats").innerHTML = [
-      ["Inscritos", s.total ?? 0],
-      ["Confirmados", s.confirmadas ?? 0],
-      ["Presentes", s.presentes ?? 0],
-      ["Vagas livres", s.vagas ?? 0],
-      ["Espera", s.espera ?? 0],
-      ["Hoje", s.hoje ?? 0],
-    ].map(([l, v]) => `<article class="stat"><b>${v}</b><span>${l}</span></article>`).join("");
+      ["Inscritos", s.total ?? 0, "Cadastros no sistema", "ink"],
+      ["Confirmados", conf, cap ? `${cap} lugares no total` : "Com assento garantido", "leaf"],
+      ["Presentes", pres, conf ? `${Math.round((100 * pres) / conf)}% dos confirmados` : "Check-ins feitos", "gold"],
+      ["Vagas livres", s.vagas ?? 0, "Assentos disponíveis", "orange"],
+      ["Lista de espera", s.espera ?? 0, "Aguardando vaga", "wine"],
+      ["Novos hoje", s.hoje ?? 0, "Inscrições de hoje", "ink"],
+    ].map(([label, value, hint, tone]) =>
+      `<article class="stat is-${tone}"><b>${value}</b><span>${label}</span><i>${esc(hint)}</i></article>`).join("");
+
+    const box = qs("occupancy");
+    if (box) {
+      const pct = cap ? Math.round((100 * conf) / cap) : 0;
+      box.innerHTML = `<div class="occ-line"><span>Ocupação geral da caravana</span><b>${conf}/${cap || 0} · ${pct}%</b></div>
+        <div class="occ-bar"><span style="width:${Math.min(pct, 100)}%"></span></div>`;
+    }
   }
   function renderBuses() {
     const buses = data.onibus || [];
@@ -147,29 +229,52 @@
       <article class="chart"><h3>Check-ins</h3><div class="bar"><span style="width:${ck.total ? (100 * ck.presentes) / ck.total : 0}%"></span></div><p>${ck.presentes} de ${ck.total}</p></article>
       <article class="chart"><h3>Por dia</h3>${h(g.dias || [], maxD) || "<p>Sem dados</p>"}</article>`;
   }
-  function renderPeople() {
+  function syncFilterOptions() {
+    const ob = qs("f-onibus");
+    const fx = qs("f-faixa");
+    const busSign = data.onibus.map((o) => `${o.id}:${o.nome}`).join("|");
+    const fxSign = data.faixas.map((f) => `${f.id}:${f.nome}`).join("|");
+    if (ob.dataset.sign !== busSign) {
+      const keep = ob.value;
+      ob.innerHTML = `<option value="">Ônibus</option>` + data.onibus.map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`).join("");
+      ob.value = keep;
+      ob.dataset.sign = busSign;
+    }
+    if (fx.dataset.sign !== fxSign) {
+      const keep = fx.value;
+      fx.innerHTML = `<option value="">Faixa etária</option>` + data.faixas.map((f) => `<option value="${f.id}">${esc(f.nome)}</option>`).join("");
+      fx.value = keep;
+      fx.dataset.sign = fxSign;
+    }
+  }
+
+  function renderPeople(force) {
+    // Evita trocar a tabela embaixo do dedo de quem está com um seletor de ônibus aberto.
+    const active = document.activeElement;
+    if (!force && active?.tagName === "SELECT" && active.closest("#rows")) return;
     const list = filteredPeople();
     const count = qs("people-count");
-    if (count) count.textContent = `${list.length} de ${data.inscricoes.length}`;
+    const total = data.inscricoes.length;
+    if (count) count.textContent = list.length === total ? `${total} pessoas` : `${list.length} de ${total} pessoas`;
     qs("empty").hidden = list.length > 0;
-    const ob = qs("f-onibus").value;
-    const fx = qs("f-faixa").value;
-    qs("f-onibus").innerHTML = `<option value="">Ônibus</option>` + data.onibus.map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`).join("");
-    qs("f-faixa").innerHTML = `<option value="">Faixa etária</option>` + data.faixas.map((f) => `<option value="${f.id}">${esc(f.nome)}</option>`).join("");
-    qs("f-onibus").value = ob;
-    qs("f-faixa").value = fx;
+    syncFilterOptions();
+    document.querySelectorAll(".th-sort").forEach((th) => {
+      const on = th.dataset.sort === sort.key;
+      th.classList.toggle("is-sorted", on);
+      th.dataset.dir = on ? sort.dir : "";
+    });
     const statusClass = (st) => (st === "confirmada" ? "badge-ok" : st === "lista_espera" ? "badge-wait" : "badge-off");
-    qs("rows").innerHTML = list.map((i, n) => `<tr draggable="true" data-id="${i.id}">
-      <td>${n + 1}</td>
-      <td><strong>${esc(i.nome_completo)}</strong></td>
-      <td>${i.idade || "—"}</td>
-      <td>${esc(i.faixa_nome || "—")}</td>
-      <td>${esc(i.onibus_nome || "—")}</td>
-      <td>${esc(i.whatsapp || "—")}</td>
-      <td class="code-cell">${esc(i.codigo_inscricao)}</td>
-      <td><span class="badge ${statusClass(i.status)}">${esc(String(i.status || "").replace("_", " "))}</span></td>
-      <td><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
-      <td class="cell-actions">
+    qs("rows").innerHTML = list.map((i, n) => `<tr draggable="true" data-id="${i.id}" class="${i.presente ? "is-present" : ""}">
+      <td data-label="Nº">${n + 1}</td>
+      <td data-label="Nome"><strong>${esc(i.nome_completo)}</strong></td>
+      <td data-label="Idade">${i.idade || "—"}</td>
+      <td data-label="Faixa">${esc(i.faixa_nome || "—")}</td>
+      <td data-label="Ônibus">${esc(i.onibus_nome || "—")}</td>
+      <td data-label="WhatsApp">${waCell(i.whatsapp)}</td>
+      <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
+      <td data-label="Status"><span class="badge ${statusClass(i.status)}">${esc(String(i.status || "").replace("_", " "))}</span></td>
+      <td data-label="Presença"><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
+      <td class="cell-actions" data-label="Ações">
         <div class="row-actions">
           ${moveBox(i)}
           ${i.status === "cancelada" ? "" : `<button class="btn-admin" data-cancel="${i.id}" type="button">Cancelar</button>`}
@@ -186,7 +291,14 @@
     const people = ids.map((id) => data.inscricoes.find((i) => i.id === id)).filter(Boolean);
     qs("wait-alert").textContent = people.length ? `${people.length} pessoa(s) aguardando vaga.` : "Lista de espera vazia.";
     qs("wait-rows").innerHTML = people.length
-      ? people.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.nome_completo)}</td><td>${i.idade || "—"}</td><td class="code-cell">${esc(i.codigo_inscricao)}</td><td>${when(i.criado_em)}</td><td class="cell-actions"><button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button></td></tr>`).join("")
+      ? people.map((i, n) => `<tr>
+          <td data-label="Posição">${n + 1}º</td>
+          <td data-label="Nome"><strong>${esc(i.nome_completo)}</strong></td>
+          <td data-label="Idade">${i.idade || "—"}</td>
+          <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
+          <td data-label="Desde">${when(i.criado_em)}</td>
+          <td data-label="Ações" class="cell-actions"><button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button></td>
+        </tr>`).join("")
       : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
   }
   function renderSettings() {
@@ -263,6 +375,7 @@
   async function refresh() {
     data = await window.DNJApi.dashboard(adminEmail, password);
     paint();
+    stampNow();
   }
 
   function go(name) {
@@ -294,25 +407,69 @@
     try {
       await moverInscrito(mover.dataset.move, sel?.value);
     } catch (err) {
-      alert(err?.message || "Não foi possível mover.");
+      toast(err?.message || "Não foi possível mover.", "err");
     }
   });
-  qs("search").addEventListener("input", () => renderPeople());
-  ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => qs(id).addEventListener("change", () => renderPeople()));
+  qs("search").addEventListener("input", () => renderPeople(true));
+  ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => qs(id).addEventListener("change", () => renderPeople(true)));
+  qs("btn-clear").addEventListener("click", () => {
+    qs("search").value = "";
+    ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => { qs(id).value = ""; });
+    renderPeople(true);
+  });
+  document.querySelectorAll(".th-sort").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      sort = sort.key === key ? { key, dir: sort.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" };
+      renderPeople(true);
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "/" || e.ctrlKey || e.metaKey || dash.hidden) return;
+    const el = document.activeElement;
+    if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+    if (view !== "people") go("people");
+    e.preventDefault();
+    qs("search").focus();
+  });
+  qs("btn-refresh").addEventListener("click", async () => {
+    const btn = qs("btn-refresh");
+    btn.disabled = true;
+    try {
+      await refresh();
+      toast("Dados atualizados.");
+    } catch (err) {
+      toast(err?.message || "Não foi possível atualizar agora.", "err");
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   qs("rows").addEventListener("click", async (e) => {
     const check = e.target.closest("[data-check]");
     const cancel = e.target.closest("[data-cancel]");
     const del = e.target.closest("[data-del]");
     try {
-      if (check) { await window.DNJApi.checkin(adminEmail, password, check.dataset.check); await refresh(); }
-      if (cancel && confirm("Cancelar esta inscrição? O assento será liberado, mas o cadastro permanece.")) {
-        await window.DNJApi.update(adminEmail, password, cancel.dataset.cancel, { status: "cancelada" });
+      if (check) {
+        await window.DNJApi.checkin(adminEmail, password, check.dataset.check);
         await refresh();
+        toast("Presença registrada.");
       }
-      if (del && confirm(`Excluir ${del.dataset.nome}?\n\nA inscrição some da lista, a vaga do ônibus é liberada e a pessoa pode se inscrever de novo.`)) {
-        await window.DNJApi.remove(adminEmail, password, del.dataset.del);
-        await refresh();
+      if (cancel) {
+        const yes = await ask("O assento será liberado na hora, mas o cadastro da pessoa continua salvo.", { title: "Cancelar inscrição", ok: "CANCELAR INSCRIÇÃO", danger: true });
+        if (yes) {
+          await window.DNJApi.update(adminEmail, password, cancel.dataset.cancel, { status: "cancelada" });
+          await refresh();
+          toast("Inscrição cancelada.");
+        }
+      }
+      if (del) {
+        const yes = await ask(`Excluir ${del.dataset.nome}? A inscrição some da lista, a vaga do ônibus é liberada e a pessoa pode se inscrever de novo.`, { title: "Excluir inscrição", ok: "EXCLUIR", danger: true });
+        if (yes) {
+          await window.DNJApi.remove(adminEmail, password, del.dataset.del);
+          await refresh();
+          toast("Inscrição excluída.");
+        }
       }
       const mover = e.target.closest("[data-move]");
       if (mover) {
@@ -320,38 +477,49 @@
         await moverInscrito(mover.dataset.move, sel?.value);
       }
     } catch (err) {
-      alert(err?.message || "Não foi possível concluir a ação.");
+      toast(err?.message || "Não foi possível concluir a ação.", "err");
     }
   });
   qs("wait-rows").addEventListener("click", async (e) => {
     const del = e.target.closest("[data-del]");
     if (!del) return;
     try {
-      if (confirm(`Excluir ${del.dataset.nome} da lista de espera?`)) {
+      const yes = await ask(`Excluir ${del.dataset.nome} da lista de espera?`, { title: "Excluir da espera", ok: "EXCLUIR", danger: true });
+      if (yes) {
         await window.DNJApi.remove(adminEmail, password, del.dataset.del);
         await refresh();
+        toast("Removido da lista de espera.");
       }
     } catch (err) {
-      alert(err?.message || "Não foi possível excluir.");
+      toast(err?.message || "Não foi possível excluir.", "err");
     }
   });
   qs("btn-promote").addEventListener("click", async () => {
+    const btn = qs("btn-promote");
+    btn.disabled = true;
     try {
       const r = await window.DNJApi.promover(adminEmail, password, null);
-      alert(r?.alerta || (r ? "Promovido." : "Ninguém na espera ou sem vaga."));
       await refresh();
+      toast(r?.alerta || (r ? "Próximo da fila foi promovido." : "Ninguém na espera ou sem vaga."), r ? "ok" : "warn");
     } catch (err) {
-      alert(err?.message || "Não foi possível promover.");
+      toast(err?.message || "Não foi possível promover.", "err");
+    } finally {
+      btn.disabled = false;
     }
   });
+  qs("ask-no").addEventListener("click", () => closeAsk(false));
+  qs("ask-yes").addEventListener("click", () => closeAsk(true));
+  qs("ask").addEventListener("close", () => closeAsk(false));
   qs("transfer-no").addEventListener("click", () => qs("transfer").close());
   qs("transfer-yes").addEventListener("click", async () => {
     try {
       if (pendingTransfer) await window.DNJApi.transfer(adminEmail, password, pendingTransfer.id, pendingTransfer.dest.id);
       qs("transfer").close();
       await refresh();
+      toast("Passageiro transferido.");
     } catch (err) {
-      alert(err?.message || "Não foi possível transferir.");
+      qs("transfer").close();
+      toast(err?.message || "Não foi possível transferir.", "err");
     }
   });
   qs("cfg-form").addEventListener("submit", async (e) => {
@@ -512,9 +680,22 @@
 </body></html>`);
     win.document.close();
   }
-  qs("btn-csv").addEventListener("click", () => exportRows("csv"));
-  qs("btn-xlsx").addEventListener("click", () => exportRows("xlsx"));
-  qs("btn-pdf").addEventListener("click", () => exportRows("pdf"));
+  function runExport(kind, label) {
+    const list = filteredPeople();
+    if (!list.length) {
+      toast("Nenhum inscrito nos filtros atuais para exportar.", "warn");
+      return;
+    }
+    try {
+      exportRows(kind);
+      toast(`${label} gerado com ${list.length} registro(s).`);
+    } catch (err) {
+      toast(err?.message || "Não foi possível exportar.", "err");
+    }
+  }
+  qs("btn-csv").addEventListener("click", () => runExport("csv", "CSV"));
+  qs("btn-xlsx").addEventListener("click", () => runExport("xlsx", "Excel"));
+  qs("btn-pdf").addEventListener("click", () => runExport("pdf", "PDF"));
   qs("btn-logout").addEventListener("click", () => {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem(EMAIL_KEY);
@@ -533,7 +714,9 @@
       dash.hidden = false;
       document.body.classList.add("dash-on");
       clearInterval(timer);
-      timer = setInterval(() => refresh().catch(() => {}), 4000);
+      timer = setInterval(() => {
+        if (!document.hidden) refresh().catch(() => {});
+      }, 6000);
       const s = window.DNJApi.client?.();
       if (s?.channel) {
         s.channel("dnj-live")
@@ -553,6 +736,10 @@
   }
   qs("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const label = btn?.querySelector(".btn-cta-label");
+    if (btn) btn.disabled = true;
+    if (label) label.textContent = "ENTRANDO…";
     try {
       const email = e.target.email.value.trim().toLowerCase();
       const result = await window.DNJApi.login(email, e.target.password.value);
@@ -566,6 +753,9 @@
     } catch (_) {
       qs("login-error").hidden = false;
       qs("login-error").textContent = "E-mail ou senha incorretos.";
+    } finally {
+      if (btn) btn.disabled = false;
+      if (label) label.textContent = "ENTRAR";
     }
   });
   if (password && adminEmail) {

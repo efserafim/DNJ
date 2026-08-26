@@ -49,6 +49,8 @@
       </nav>
       <div class="dash-meta">
         <span class="live-dot" title="Atualização automática">Ao vivo</span>
+        <span class="dash-updated" id="dash-updated"></span>
+        <button class="btn-ghost" id="btn-refresh" type="button" title="Atualizar agora">Atualizar</button>
         <a href="index.html" class="btn-ghost dash-site-btn">Ver site</a>
         <button class="btn-ghost" id="btn-logout" type="button">Sair</button>
       </div>
@@ -61,6 +63,7 @@
           <h2>Ônibus</h2>
           <p>Ocupação em tempo real. Abra a aba Ônibus para o mapa de assentos.</p>
         </div>
+        <div class="occupancy" id="occupancy"></div>
         <div class="bus-row" id="bus-cards"></div>
       </section>
       <div class="home-grid">
@@ -97,24 +100,35 @@
           <p id="people-count">0 pessoas</p>
         </div>
         <div class="toolbar">
-          <input id="search" type="search" placeholder="Nome, código, WhatsApp, cidade…" />
+          <input id="search" type="search" placeholder="Buscar por nome, código, WhatsApp ou cidade…" />
           <div class="filter-row">
             <select id="f-status"><option value="">Status</option><option value="confirmada">Confirmada</option><option value="lista_espera">Lista de espera</option><option value="cancelada">Cancelada</option></select>
             <select id="f-presente"><option value="">Presença</option><option value="1">Presentes</option><option value="0">Ausentes</option></select>
             <select id="f-onibus"><option value="">Ônibus</option></select>
             <select id="f-faixa"><option value="">Faixa etária</option></select>
+            <button class="btn-ghost btn-clear" id="btn-clear" type="button">Limpar filtros</button>
           </div>
           <div class="export-row">
+            <span class="export-label">Exportar:</span>
             <button class="btn-ghost" id="btn-csv" type="button">CSV</button>
             <button class="btn-ghost" id="btn-xlsx" type="button">Excel</button>
             <button class="btn-ghost" id="btn-pdf" type="button">PDF</button>
           </div>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="table-people">
             <thead>
               <tr>
-                <th>Nº</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>Ônibus</th><th>WhatsApp</th><th>Código</th><th>Status</th><th>Presença</th><th>Ações</th>
+                <th>Nº</th>
+                <th class="th-sort" data-sort="nome">Nome</th>
+                <th class="th-sort" data-sort="idade">Idade</th>
+                <th class="th-sort" data-sort="faixa">Faixa</th>
+                <th class="th-sort" data-sort="onibus">Ônibus</th>
+                <th>WhatsApp</th>
+                <th class="th-sort" data-sort="codigo">Código</th>
+                <th class="th-sort" data-sort="status">Status</th>
+                <th class="th-sort" data-sort="presente">Presença</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -134,7 +148,7 @@
           <button class="btn-cta" id="btn-promote" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">PROMOVER PRÓXIMO</span></button>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="table-wait">
             <thead><tr><th>Posição</th><th>Nome</th><th>Idade</th><th>Código</th><th>Desde</th><th>Ações</th></tr></thead>
             <tbody id="wait-rows"></tbody>
           </table>
@@ -197,6 +211,17 @@
       <button class="btn-cta" id="transfer-yes" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">CONFIRMAR</span></button>
     </div>
   </dialog>
+
+  <dialog id="ask" class="admin-dialog">
+    <p class="admin-kicker" id="ask-title">Confirmar</p>
+    <p id="ask-text"></p>
+    <div class="form-nav">
+      <button class="btn-ghost" id="ask-no" type="button">Cancelar</button>
+      <button class="btn-cta" id="ask-yes" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">CONFIRMAR</span></button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
 
   <nav class="mobile-nav">
     <button data-view="home" type="button">Início</button>
