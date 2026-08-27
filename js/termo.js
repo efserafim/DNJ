@@ -61,11 +61,14 @@
     setText("termo-coord-cpf", coord.cpf);
     setText("termo-sign-name", g.nome, "");
     const card = document.getElementById("minor-card");
+    const alertBox = document.getElementById("minor-alert");
     const send = document.getElementById("btn-send-termo");
-    if (card) card.hidden = !isMinor(record);
+    const minor = isMinor(record);
+    if (card) card.hidden = !minor;
+    if (alertBox) alertBox.hidden = !minor;
     if (send) {
       const msg = [
-        "Olá! Segue a autorização do menor de 18 anos da Caravana Geração Eucarística ao DNJ.",
+        "Olá, Beatriz! Segue a autorização do menor de 18 anos da Caravana Geração Eucarística ao DNJ.",
         record?.nome_completo ? `Participante: ${record.nome_completo}` : "",
         record?.codigo_inscricao ? `Código: ${record.codigo_inscricao}` : "",
         g.nome ? `Responsável: ${g.nome}` : "",

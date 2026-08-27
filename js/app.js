@@ -205,7 +205,10 @@
         row.presente ? "Check-in realizado" : "Aguardando o dia",
       ].filter(Boolean).join(" · ");
       const lookupTermo = document.getElementById("lookup-termo");
-      lookupTermo.hidden = !window.DNJTermo.isMinor(row);
+      const lookupNote = document.getElementById("lookup-minor-note");
+      const isMinor = window.DNJTermo.isMinor(row);
+      lookupTermo.hidden = !isMinor;
+      if (lookupNote) lookupNote.hidden = !isMinor;
     } catch (_) {
       result.hidden = true;
       errorBox.hidden = false;

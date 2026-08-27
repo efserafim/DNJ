@@ -164,7 +164,7 @@
       return false;
     }
     if (!form.ciente_termo_menor.checked) {
-      showError("Confirme que o responsável vai assinar o termo e enviar a foto.");
+      showError("Confirme que o responsável vai assinar o termo e enviar para a Beatriz no WhatsApp.");
       return false;
     }
     return true;

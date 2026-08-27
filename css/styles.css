@@ -1092,6 +1092,17 @@ body {
   border: 1px solid rgba(196, 92, 38, 0.22);
 }
 
+.minor-form-alert {
+  margin: 0 0 12px !important;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #6b1c28;
+  color: #fff8ea !important;
+  font-size: 0.88rem !important;
+  font-weight: 700;
+  line-height: 1.4 !important;
+}
+
 .minor-form h3 {
   margin: 0 0 8px;
   font-family: "Bebas Neue", sans-serif;
@@ -1307,14 +1318,53 @@ body {
   line-height: 1.3;
 }
 
+.minor-alert {
+  margin: 14px 0 4px;
+  padding: 14px 16px 16px;
+  text-align: left;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #8b1e2d, #6b1c28);
+  color: #fff8ea;
+  border: 2px solid #f5c84c;
+  box-shadow: 0 10px 28px rgba(107, 28, 40, 0.28);
+}
+
+.minor-alert-kicker {
+  margin: 0 0 4px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #f5c84c;
+}
+
+.minor-alert-title {
+  margin: 0 0 8px;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  color: #fff8ea;
+}
+
+.minor-alert p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.minor-alert a {
+  color: #f5c84c;
+  font-weight: 800;
+}
+
 .minor-card {
   margin: 8px 0 22px;
   padding: 18px 16px 16px;
   text-align: left;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 248, 234, 0.9), rgba(196, 92, 38, 0.06));
-  border: 1px solid rgba(196, 92, 38, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, #fff8ea, #f8e0b8);
+  border: 2px solid var(--orange);
+  box-shadow: 0 8px 22px rgba(196, 92, 38, 0.16);
 }
 
 .minor-kicker {
@@ -1613,6 +1663,17 @@ dialog.ticket[open] {
 #lookup-open-ticket {
   width: 100%;
   margin: 14px 0 6px;
+}
+
+.lookup-minor-note {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #6b1c28;
+  color: #fff8ea;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 #lookup .ticket-event {
@@ -1935,114 +1996,137 @@ button.code:hover {
   body.print-termo > *:not(#termo) {
     display: none !important;
   }
+  body.print-termo,
+  body.print-termo html {
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
   body.print-termo #termo {
     display: block !important;
     width: 100%;
     margin: 0;
     background: #fff8ea;
     color: #2c1a12;
-    border: 2px solid #6b1c28;
-    overflow: hidden;
+    border: 0.5mm solid #6b1c28;
+    overflow: visible !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  body.print-termo .ticket-logos {
+    margin: 0 0 2mm;
+    gap: 6mm;
+  }
+  body.print-termo .ticket-logos .logo-ge {
+    width: 10mm !important;
+    height: 10mm !important;
+  }
+  body.print-termo .ticket-logos .logo-pascom {
+    height: 12mm !important;
   }
   .termo-head {
-    padding: 18px 22px 14px;
+    padding: 4mm 8mm 4mm;
     text-align: center;
     background: linear-gradient(180deg, #8b1e2d, #6b1c28);
     color: #f8eedc;
   }
   .termo-org {
-    margin: 0 0 6px;
-    letter-spacing: 0.16em;
+    margin: 0 0 1mm;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    font-size: 0.68rem;
+    font-size: 7.5pt;
     font-weight: 700;
     color: #e8b84a;
   }
   .termo-head h1 {
     margin: 0;
     font-family: "Bebas Neue", sans-serif;
-    font-size: 1.7rem;
-    letter-spacing: 0.04em;
+    font-size: 16pt;
+    letter-spacing: 0.03em;
     font-weight: 400;
     color: #fff8ea;
   }
   .termo-sub {
-    margin: 6px 0 0;
-    font-size: 0.85rem;
+    margin: 1mm 0 0;
+    font-size: 9pt;
     color: #f5c84c;
   }
   .termo-body {
-    padding: 16px 22px 12px;
-    font-size: 0.92rem;
-    line-height: 1.5;
+    padding: 4mm 8mm 3mm;
+    font-size: 9.5pt;
+    line-height: 1.35;
   }
   .termo-body p {
-    margin: 0 0 10px;
+    margin: 0 0 2.2mm;
   }
   .termo-dados {
     list-style: none;
-    margin: 0 0 12px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    margin: 0 0 2.5mm;
+    padding: 2mm 3.5mm;
+    border-radius: 3mm;
     background: #f6ead2;
-    border: 1px solid rgba(232, 184, 74, 0.45);
+    border: 0.3mm solid rgba(232, 184, 74, 0.45);
   }
   .termo-dados li {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    padding: 4px 0;
-    border-bottom: 1px solid rgba(44, 26, 18, 0.08);
+    gap: 8px;
+    padding: 1mm 0;
+    border-bottom: 0.2mm solid rgba(44, 26, 18, 0.08);
+    font-size: 9.5pt;
   }
   .termo-dados li:last-child { border-bottom: 0; }
   .termo-dados span {
     color: #5a3d2e;
-    font-size: 0.78rem;
+    font-size: 7.5pt;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
   }
   .termo-sign {
-    margin: 22px 0 12px;
+    margin: 3mm 0 2.5mm;
     text-align: center;
   }
   .termo-sign-pad {
-    margin: 12px auto 0;
+    margin: 2mm auto 0;
     width: min(460px, 92%);
-    min-height: 45mm;
-    border: 1px dashed rgba(44, 26, 18, 0.28);
-    border-radius: 10px;
+    min-height: 22mm;
+    height: 22mm;
+    border: 0.3mm dashed rgba(44, 26, 18, 0.28);
+    border-radius: 2.5mm;
     background: rgba(255, 248, 234, 0.65);
   }
   .termo-sign-line {
-    margin: 10px auto 6px;
+    margin: 2mm auto 1mm;
     width: min(460px, 92%);
-    border-top: 1px solid #2c1a12;
-    padding-top: 8px;
-    font-size: 0.8rem;
+    border-top: 0.3mm solid #2c1a12;
+    padding-top: 1.5mm;
+    font-size: 8pt;
     color: #5a3d2e;
   }
   .termo-sign-name {
-    margin: 4px 0 0;
-    font-size: 0.82rem;
+    margin: 0;
+    font-size: 9pt;
     color: #5a3d2e;
   }
   .termo-gov {
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: rgba(196, 92, 38, 0.1);
-    font-size: 0.78rem;
-    line-height: 1.45;
+    padding: 2.5mm 3.5mm;
+    border-radius: 2.5mm;
+    background: rgba(196, 92, 38, 0.12);
+    font-size: 8.5pt;
+    line-height: 1.35;
   }
-  .termo-gov p { margin: 0 0 6px; }
+  .termo-gov p { margin: 0 0 1mm; }
   .termo-gov p:last-child { margin: 0; }
   .termo-bar {
     margin: 0;
-    padding: 10px 16px;
+    padding: 2.5mm 5mm;
     text-align: center;
-    font-size: 0.72rem;
+    font-size: 8pt;
     letter-spacing: 0.06em;
     background: linear-gradient(180deg, #d4682a, #c45c26);
     color: #f8eedc;
+    break-before: avoid;
+    page-break-before: avoid;
   }
 }
 

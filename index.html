@@ -268,8 +268,9 @@
           <p class="step-intro">Confira seus dados e autorize o uso só para organizar a ida da nossa caravana ao DNJ 2026.</p>
           <div class="review" id="review-box"></div>
           <div id="bloco-menor" class="minor-form" hidden>
-            <h3>Menor de 18 anos</h3>
-            <p>O responsável legal precisa preencher os dados abaixo. Depois da inscrição, baixe o termo em PDF, assine e nos envie a foto (ou o PDF assinado no gov.br).</p>
+            <p class="minor-form-alert">Atenção: menor de 18 anos só embarca com o termo assinado pelo responsável e enviado no WhatsApp da Beatriz · 22 92005-0790.</p>
+            <h3>Dados do responsável</h3>
+            <p>Preencha os dados abaixo. Depois da inscrição, baixe o termo, peça a assinatura e envie a foto (ou o PDF) para a Beatriz.</p>
             <label class="field">
               <span>Nome completo do responsável</span>
               <input type="text" name="nome_responsavel" maxlength="120" autocomplete="name" />
@@ -298,7 +299,7 @@
             </label>
             <label class="terms">
               <input type="checkbox" name="ciente_termo_menor" />
-              <span>Estou ciente de que o responsável deve assinar o termo de autorização e enviar a foto nítida (ou o PDF assinado) para a coordenação da caravana.</span>
+              <span>Estou ciente de que o responsável deve assinar o termo e enviar a foto nítida (ou o PDF) no WhatsApp da Beatriz (22 92005-0790).</span>
             </label>
           </div>
           <label class="terms">
@@ -331,6 +332,13 @@
       <p class="confirm-kicker">Caravana Geração Eucarística ao DNJ</p>
       <h1>INSCRIÇÃO CONFIRMADA!</h1>
       <p class="confirm-lead" id="confirm-lead">Sua inscrição no DNJ 2026 está confirmada.</p>
+
+      <aside id="minor-alert" class="minor-alert" hidden>
+        <p class="minor-alert-kicker">Atenção · menor de 18 anos</p>
+        <p class="minor-alert-title">O responsável precisa assinar o termo</p>
+        <p>Sem o termo assinado, o menor <strong>não embarca</strong>. Baixe o PDF, peça a assinatura do pai, da mãe ou do responsável e <strong>envie para a Beatriz</strong> no WhatsApp <a href="https://wa.me/5522920050790" target="_blank" rel="noopener">22 92005-0790</a>.</p>
+      </aside>
+
       <p class="verse confirm-verse">
         <span class="verse-plain">“Vinho novo em odres</span>
         <span class="verse-script">novos.”</span>
@@ -351,24 +359,17 @@
       <p class="copied" id="copied-msg" hidden>Código copiado.</p>
 
       <aside id="minor-card" class="minor-card" hidden>
-        <p class="minor-kicker">Menor de 18 anos</p>
-        <h2>Termo de autorização</h2>
-        <p>Baixe o PDF, peça ao responsável para assinar e <strong>envie a foto nítida do termo</strong> (ou o arquivo assinado) no WhatsApp da coordenação.</p>
+        <p class="minor-kicker">Passo obrigatório</p>
+        <h2>Envie o termo para a Beatriz</h2>
+        <p>1. Baixe o termo em PDF.<br>2. O responsável assina (no papel ou no gov.br).<br>3. Mande a foto nítida ou o PDF no WhatsApp da Beatriz.</p>
         <div class="minor-actions">
           <button type="button" class="btn-cta" id="btn-print-termo">
             <span class="btn-cta-fill"></span>
             <span class="btn-cta-label">BAIXAR TERMO EM PDF</span>
           </button>
-          <a class="btn-ghost" id="btn-send-termo" href="#" target="_blank" rel="noopener">ENVIAR FOTO NO WHATSAPP</a>
+          <a class="btn-ghost" id="btn-send-termo" href="#" target="_blank" rel="noopener">ENVIAR PARA A BEATRIZ NO WHATSAPP</a>
         </div>
-        <p class="minor-how">Na impressão, escolha <strong>Salvar como PDF</strong>.</p>
-        <h3>Assinar digitalmente no gov.br (opcional)</h3>
-        <ol class="gov-steps">
-          <li>Acesse <a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a></li>
-          <li>Entre com a conta <strong>gov.br</strong> (nível prata ou ouro)</li>
-          <li>Envie o PDF do termo e confirme a assinatura</li>
-          <li>Baixe o PDF assinado e nos envie no WhatsApp</li>
-        </ol>
+        <p class="minor-how">Na impressão, escolha <strong>Salvar como PDF</strong>. WhatsApp da Beatriz: <strong>22 92005-0790</strong>.</p>
       </aside>
 
       <div class="confirm-actions">
@@ -443,6 +444,7 @@
       <p class="ticket-code" id="lookup-code"></p>
       <p id="lookup-meta"></p>
       <button type="button" class="btn-cta" id="lookup-open-ticket"><span class="btn-cta-fill"></span><span class="btn-cta-label">VER INGRESSO COM QR CODE</span></button>
+      <p class="lookup-minor-note" id="lookup-minor-note" hidden>Menor de 18 anos: o responsável precisa assinar o termo e enviar para a Beatriz no WhatsApp 22 92005-0790.</p>
       <button type="button" class="btn-ghost" id="lookup-termo" hidden>Baixar termo de autorização (PDF)</button>
     </div>
   </dialog>
@@ -468,7 +470,7 @@
       </ul>
       <p>O evento <strong>DNJ 2026</strong> ocorre em <strong>18 de outubro de 2026</strong>, na Orla do Marine — Maricá, com saída da caravana às <strong>7h</strong>. O DNJ é promovido pelo Setor Juventude — Arquidiocese de Niterói. Esta caravana é organizada pelo Grupo Jovem Geração Eucarística, Paróquia Santo Antônio — Bacaxá, Saquarema/RJ.</p>
       <p>Autorizo o(a) menor a viajar e permanecer sob a responsabilidade de <strong id="termo-coord-nome">Ana Beatriz Moreira dos Santos</strong>, CPF <strong id="termo-coord-cpf">119.876.987-46</strong>, responsável pela caravana, e da equipe de coordenação, inclusive para acionar atendimento de saúde em caso de emergência.</p>
-      <p>Declaro que as informações são verdadeiras e que o menor está apto a participar. Este termo deve ser assinado e devolvido à coordenação em foto nítida ou PDF assinado.</p>
+      <p>Declaro que as informações são verdadeiras e que o menor está apto a participar.</p>
       <div class="termo-sign">
         <p>Bacaxá / Saquarema-RJ, _____ / _____ / ________</p>
         <div class="termo-sign-pad" aria-hidden="true"></div>
@@ -478,8 +480,8 @@
         <p class="termo-sign-name" id="termo-sign-name"></p>
       </div>
       <aside class="termo-gov">
-        <p><strong>Como devolver:</strong> fotografe o termo assinado (legível) ou envie o PDF e mande no WhatsApp da coordenação.</p>
-        <p><strong>Assinatura digital no gov.br (opcional):</strong> 1) Acesse assinador.iti.br · 2) Entre com gov.br (prata ou ouro) · 3) Envie este PDF e assine · 4) Baixe o arquivo assinado e nos envie.</p>
+        <p><strong>Devolver para Beatriz Moreira · WhatsApp 22 92005-0790</strong></p>
+        <p>Foto nítida do termo assinado ou PDF. Sem este envio, o menor não embarca.</p>
       </aside>
     </div>
     <p class="termo-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>
