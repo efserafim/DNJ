@@ -7,6 +7,7 @@
   const lookup = document.getElementById("lookup");
   const cfg = window.DNJ_CONFIG || {};
   let current = null;
+  let mine = null;
 
   function closeDialogs() {
     if (ticket.open) ticket.close();
@@ -61,10 +62,13 @@
     try { localStorage.setItem(KEY, JSON.stringify(record)); } catch (_) {}
   }
 
-  function fillTicket(record) {
+  function fillTicket(record, persist = false) {
     if (!record?.codigo_inscricao) return;
     current = record;
-    remember(record);
+    if (persist) {
+      mine = record;
+      remember(record);
+    }
     const wait = record.status === "lista_espera";
     document.getElementById("confirm-code").textContent = record.codigo_inscricao;
     document.getElementById("confirm-lead").textContent = wait
@@ -87,22 +91,29 @@
     window.DNJTermo?.fill(record);
   }
 
-  function openTicket() {
-    if (!current?.codigo_inscricao) return;
+  function openTicket(record) {
+    const row = record || current || mine;
+    if (!row?.codigo_inscricao) return;
+    fillTicket(row);
     openDialog(ticket);
   }
 
   function showMyTicketShortcut() {
     const btn = document.getElementById("btn-my-ticket");
-    if (btn) btn.hidden = false;
     const link = document.getElementById("btn-lookup");
-    if (link) link.textContent = "Consultar outra inscrição";
+    const hasMine = Boolean(mine?.codigo_inscricao);
+    if (btn) btn.hidden = !hasMine;
+    if (link) link.textContent = hasMine ? "Consultar outra inscrição" : "Já me inscrevi · ver meu ingresso";
   }
 
   function restoreSaved() {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (_) {}
-    if (!saved?.codigo_inscricao) return;
+    if (!saved?.codigo_inscricao) {
+      showMyTicketShortcut();
+      return;
+    }
+    mine = saved;
     fillTicket(saved);
     showMyTicketShortcut();
   }
@@ -142,7 +153,9 @@
   }
 
   function printTicket() {
-    if (!current?.codigo_inscricao) return;
+    const row = current || mine;
+    if (!row?.codigo_inscricao) return;
+    fillTicket(row);
     openDialog(ticket);
     setTimeout(() => window.print(), 250);
   }
@@ -155,9 +168,9 @@
   document.getElementById("btn-start").addEventListener("click", () => { window.DNJForm.reset(); show("form"); });
   document.getElementById("btn-back-hero").addEventListener("click", () => show("hero"));
   document.getElementById("btn-home").addEventListener("click", () => { show("hero"); loadInscricoesStatus(); });
-  document.getElementById("btn-view").addEventListener("click", openTicket);
-  document.getElementById("btn-my-ticket").addEventListener("click", openTicket);
-  document.getElementById("lookup-open-ticket").addEventListener("click", openTicket);
+  document.getElementById("btn-view").addEventListener("click", () => openTicket(current || mine));
+  document.getElementById("btn-my-ticket").addEventListener("click", () => openTicket(mine));
+  document.getElementById("lookup-open-ticket").addEventListener("click", () => openTicket(current));
   document.getElementById("btn-close-ticket").addEventListener("click", () => ticket.close());
   document.getElementById("btn-lookup").addEventListener("click", () => {
     resetLookup();
@@ -181,8 +194,6 @@
     btn.disabled = true;
     try {
       const row = await window.DNJApi.lookup(event.target.codigo.value, event.target.nascimento.value);
-      current = row;
-      remember(row);
       fillTicket(row);
       result.hidden = false;
       document.getElementById("lookup-name").textContent = row.nome_completo;
@@ -195,7 +206,6 @@
       ].filter(Boolean).join(" · ");
       const lookupTermo = document.getElementById("lookup-termo");
       lookupTermo.hidden = !window.DNJTermo.isMinor(row);
-      showMyTicketShortcut();
     } catch (_) {
       result.hidden = true;
       errorBox.hidden = false;
@@ -224,7 +234,7 @@
         ...record,
         idade: record.idade ?? window.DNJForm.calcAge(data.data_nascimento),
       };
-      fillTicket(merged);
+      fillTicket(merged, true);
       showMyTicketShortcut();
       show("confirm");
     } catch (error) {
