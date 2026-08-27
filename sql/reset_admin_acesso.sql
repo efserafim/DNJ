@@ -1,39 +1,118 @@
--- Cole no SQL Editor do Supabase e rode (Run).
--- Corrige o erro: function gen_salt(unknown) does not exist
--- No Supabase o pgcrypto vive no schema extensions, e as funções
--- administrativas só enxergavam public.
+-- Restaura o acesso de TODOS os administradores para geracao2026.
+-- Cada pessoa continua com senha propria: depois do login, cada um
+-- cria a senha dela de novo. A troca nao e mais coletiva.
+-- Cole no SQL Editor do Supabase e clique em Run.
 
 create extension if not exists pgcrypto with schema extensions;
 
 alter table public.administradores
   add column if not exists senha_hash text not null default '';
 
-create or replace function public.assert_admin(p_pin text)
-returns void
+insert into public.administradores (nome, email, papel, ativo)
+values
+  ('Beatriz', 'beatriz@geucaristica.com.br', 'coordenador', true),
+  ('Lavínia', 'lavinia@geucaristica.com.br', 'administrador', true),
+  ('Duda', 'duda@geucaristica.com.br', 'administrador', true),
+  ('João Gabriel', 'joaogabriel@geucaristica.com.br', 'administrador', true),
+  ('Eduardo', 'eduardo@geucaristica.com.br', 'administrador', true)
+on conflict (email) do update set
+  nome = excluded.nome,
+  papel = excluded.papel,
+  ativo = true;
+
+do $$
+declare
+  v_hash text;
+begin
+  begin
+    v_hash := extensions.crypt('geracao2026', extensions.gen_salt('bf'::text));
+  exception when undefined_function then
+    v_hash := crypt('geracao2026', gen_salt('bf'::text));
+  end;
+  update public.administradores set senha_hash = v_hash;
+  update public.configuracoes_evento
+  set admin_pin = v_hash, atualizado_em = now();
+end $$;
+
+create or replace function public.admin_pin_ok(p_stored text, p_pin text)
+returns boolean
+language plpgsql
+stable
+set search_path = public, extensions
+as $$
+begin
+  if p_stored is null or length(trim(p_stored)) = 0 or p_pin is null then
+    return false;
+  end if;
+  if p_stored like '$2%' then
+    begin
+      return p_stored = crypt(trim(p_pin), p_stored);
+    exception when undefined_function then
+      return false;
+    end;
+  end if;
+  return p_stored = trim(p_pin);
+end;
+$$;
+
+create or replace function public.assert_admin_session(p_email text, p_pin text)
+returns text
 language plpgsql
 security definer
 set search_path = public, extensions
 as $$
 declare
-  v_stored text;
+  v_nome text;
+  v_hash text;
+  v_shared text;
 begin
-  if p_pin is null or length(trim(p_pin)) = 0 then
+  if p_email is null or p_pin is null or length(trim(p_pin)) = 0 then
     raise exception 'unauthorized';
   end if;
-  select admin_pin into v_stored from public.configuracoes_evento limit 1;
-  if v_stored is null or length(v_stored) = 0 then
+  select nome, senha_hash into v_nome, v_hash
+  from public.administradores
+  where lower(trim(email)) = lower(trim(p_email))
+    and ativo = true
+  limit 1;
+  if v_nome is null then
     raise exception 'unauthorized';
   end if;
-  if v_stored like '$2%' then
-    if v_stored = crypt(trim(p_pin), v_stored) then
-      return;
+  if coalesce(v_hash, '') <> '' then
+    if public.admin_pin_ok(v_hash, p_pin) then
+      return v_nome;
     end if;
-  elsif v_stored = trim(p_pin) then
-    return;
+    raise exception 'unauthorized';
+  end if;
+  select admin_pin into v_shared from public.configuracoes_evento limit 1;
+  if public.admin_pin_ok(v_shared, p_pin) then
+    return v_nome;
   end if;
   raise exception 'unauthorized';
 end;
 $$;
+
+drop function if exists public.admin_login(text);
+
+create or replace function public.admin_login(p_email text, p_pin text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_nome text;
+begin
+  v_nome := public.assert_admin_session(p_email, p_pin);
+  return jsonb_build_object(
+    'ok', true,
+    'nome', v_nome,
+    'email', lower(trim(p_email)),
+    'senha_inicial', lower(trim(p_pin)) = 'geracao2026'
+  );
+end;
+$$;
+
+drop function if exists public.admin_save_config(text, jsonb);
 
 create or replace function public.admin_save_config(p_email text, p_pin text, p jsonb)
 returns boolean
@@ -105,5 +184,12 @@ begin
 end;
 $$;
 
-revoke execute on function public.assert_admin(text) from public, anon, authenticated;
+grant execute on function public.admin_login(text, text) to anon, authenticated;
 grant execute on function public.admin_save_config(text, text, jsonb) to anon, authenticated;
+revoke execute on function public.admin_pin_ok(text, text) from public, anon, authenticated;
+revoke execute on function public.assert_admin_session(text, text) from public, anon, authenticated;
+
+-- Conferencia
+select nome, email, papel, ativo, length(senha_hash) as tamanho_hash
+from public.administradores
+order by nome;

@@ -26,14 +26,14 @@
       <p class="form-error" id="login-error" hidden></p>
       <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">ENTRAR</span></button>
     </form>
-    <p class="hint">Acesso exclusivo da coordenação (@geucaristica.com.br). Troque a senha em Ajustes após o primeiro login.</p>
+    <p class="hint">Acesso exclusivo da coordenação (@geucaristica.com.br). Cada pessoa tem a própria senha. No primeiro acesso, use <strong>geracao2026</strong> e crie a sua.</p>
     <p class="hint"><a href="index.html">Ver site público de inscrições</a></p>
   </section>
 
   <section id="first-access" class="admin-login" hidden>
     <p class="admin-kicker">Primeiro acesso</p>
     <h1>Crie uma senha</h1>
-    <p class="hint">Você entrou com a senha inicial da coordenação. Escolha uma senha nova para continuar.</p>
+    <p class="hint">Você entrou com a senha inicial. Escolha uma senha nova — ela vale só para o seu e-mail, não altera a dos outros.</p>
     <form id="first-access-form">
       <label class="field"><span>Nova senha</span><input type="password" name="nova_senha" required autocomplete="new-password" /></label>
       <label class="field"><span>Repita a nova senha</span><input type="password" name="nova_senha_conf" required autocomplete="new-password" /></label>
@@ -44,10 +44,11 @@
       <p class="form-error" id="first-access-error" hidden></p>
       <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">SALVAR E ENTRAR</span></button>
     </form>
-    <p class="hint">A senha é a mesma para toda a coordenação. Depois de trocar, avise a equipe.</p>
+    <p class="hint">Esta senha é só sua. Os outros administradores continuam com a senha deles.</p>
   </section>
 
   <section id="dashboard" hidden>
+    <p class="checkin-warn" id="pwd-warn" hidden>Você ainda está usando a senha inicial. Crie a sua em Ajustes — isso não altera a senha dos outros.</p>
     <p class="form-error dash-load-error" id="dash-error" hidden></p>
     <header class="dash-head">
       <div class="dash-brand">
@@ -209,7 +210,7 @@
           <div id="cfg-faixas"></div>
         </section>
         <section class="panel">
-          <div class="panel-head"><h2>Acesso admin</h2><p>Troque a senha compartilhada da coordenação quando quiser.</p></div>
+          <div class="panel-head"><h2>Sua senha</h2><p>Altera só a sua senha. Não muda a dos outros administradores.</p></div>
           <div class="cfg-grid">
             <label class="field"><span>Nova senha</span><input type="password" name="nova_senha" autocomplete="new-password" placeholder="Deixe em branco para manter" /></label>
             <label class="field"><span>Confirmar nova senha</span><input type="password" name="nova_senha_conf" autocomplete="new-password" /></label>

@@ -133,10 +133,14 @@ create table if not exists public.administradores (
   user_id uuid unique,
   nome text not null,
   email text unique not null,
+  senha_hash text not null default '',
   papel text not null default 'administrador',
   ativo boolean not null default true,
   constraint papel_valido check (papel in ('administrador', 'coordenador', 'checkin'))
 );
+
+alter table public.administradores
+  add column if not exists senha_hash text not null default '';
 
 create table if not exists public.logs (
   id uuid primary key default gen_random_uuid(),

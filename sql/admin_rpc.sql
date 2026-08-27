@@ -54,6 +54,27 @@ begin
 end;
 $$;
 
+create or replace function public.admin_pin_ok(p_stored text, p_pin text)
+returns boolean
+language plpgsql
+stable
+set search_path = public, extensions
+as $$
+begin
+  if p_stored is null or length(trim(p_stored)) = 0 or p_pin is null then
+    return false;
+  end if;
+  if p_stored like '$2%' then
+    begin
+      return p_stored = crypt(trim(p_pin), p_stored);
+    exception when undefined_function then
+      return false;
+    end;
+  end if;
+  return p_stored = trim(p_pin);
+end;
+$$;
+
 create or replace function public.assert_admin_email(p_email text)
 returns text
 language plpgsql
@@ -91,14 +112,7 @@ begin
     raise exception 'unauthorized';
   end if;
   select admin_pin into v_stored from public.configuracoes_evento limit 1;
-  if v_stored is null or length(v_stored) = 0 then
-    raise exception 'unauthorized';
-  end if;
-  if v_stored like '$2%' then
-    if v_stored = crypt(trim(p_pin), v_stored) then
-      return;
-    end if;
-  elsif v_stored = trim(p_pin) then
+  if public.admin_pin_ok(v_stored, p_pin) then
     return;
   end if;
   raise exception 'unauthorized';
@@ -109,14 +123,35 @@ create or replace function public.assert_admin_session(p_email text, p_pin text)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_nome text;
+  v_hash text;
+  v_shared text;
 begin
-  v_nome := public.assert_admin_email(p_email);
-  perform public.assert_admin(p_pin);
-  return v_nome;
+  if p_email is null or p_pin is null or length(trim(p_pin)) = 0 then
+    raise exception 'unauthorized';
+  end if;
+  select nome, senha_hash into v_nome, v_hash
+  from public.administradores
+  where lower(trim(email)) = lower(trim(p_email))
+    and ativo = true
+  limit 1;
+  if v_nome is null then
+    raise exception 'unauthorized';
+  end if;
+  if coalesce(v_hash, '') <> '' then
+    if public.admin_pin_ok(v_hash, p_pin) then
+      return v_nome;
+    end if;
+    raise exception 'unauthorized';
+  end if;
+  select admin_pin into v_shared from public.configuracoes_evento limit 1;
+  if public.admin_pin_ok(v_shared, p_pin) then
+    return v_nome;
+  end if;
+  raise exception 'unauthorized';
 end;
 $$;
 
@@ -132,7 +167,12 @@ declare
   v_nome text;
 begin
   v_nome := public.assert_admin_session(p_email, p_pin);
-  return jsonb_build_object('ok', true, 'nome', v_nome, 'email', lower(trim(p_email)));
+  return jsonb_build_object(
+    'ok', true,
+    'nome', v_nome,
+    'email', lower(trim(p_email)),
+    'senha_inicial', lower(trim(p_pin)) = 'geracao2026'
+  );
 end;
 $$;
 
@@ -479,10 +519,13 @@ begin
     if lower(v_nova) in ('geracao2026', 'admin', '12345678', '1234567890') then
       raise exception 'Senha fraca: escolha outra senha';
     end if;
-    update public.configuracoes_evento set
-      admin_pin = crypt(v_nova, gen_salt('bf'::text)),
-      atualizado_em = now()
-    where id in (select c.id from public.configuracoes_evento c);
+    update public.administradores set
+      senha_hash = crypt(v_nova, gen_salt('bf'::text))
+    where lower(trim(email)) = lower(trim(p_email))
+      and ativo = true;
+    if not found then
+      raise exception 'unauthorized';
+    end if;
   end if;
   if jsonb_typeof(p->'onibus') = 'array' then
     for r in select * from jsonb_array_elements(p->'onibus') loop
@@ -520,6 +563,7 @@ $$;
 
 grant execute on function public.admin_save_config(text, text, jsonb) to anon, authenticated;
 
+revoke execute on function public.admin_pin_ok(text, text) from public, anon, authenticated;
 revoke execute on function public.assert_admin_email(text) from public, anon, authenticated;
 revoke execute on function public.assert_admin(text) from public, anon, authenticated;
 revoke execute on function public.assert_admin_session(text, text) from public, anon, authenticated;

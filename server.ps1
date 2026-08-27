@@ -83,7 +83,6 @@ function Send-IndexHtml($res, $file, $req) {
   $res.Close()
 }
 function Is-Admin($req) {
-  $cfg = Read-Auth
   $db = Read-Db
   $email = [string]$req.Headers["X-Admin-Email"]
   $pass = [string]$req.Headers["X-Admin-Password"]
@@ -93,7 +92,7 @@ function Is-Admin($req) {
   }
   if (-not $email -or -not $pass) { return $false }
   $admin = Test-AdminEmail $db $email
-  return ($admin -and $pass -eq $cfg.adminPassword)
+  return (Test-AdminPassword $admin $pass)
 }
 
 while ($listener.IsListening) {
@@ -131,10 +130,11 @@ while ($listener.IsListening) {
       continue
     }
     if ($path -eq "/api/admin/login" -and $method -eq "POST") {
-      $body = Read-Body $req; $cfg = Read-Auth; $db = Read-Db
+      $body = Read-Body $req; $db = Read-Db
       $admin = Test-AdminEmail $db ([string]$body.email)
-      if ($admin -and $body.password -eq $cfg.adminPassword) {
-        Send-Json $res 200 @{ ok=$true; nome=$admin.nome; email=$admin.email; papel=$admin.papel }
+      if ($admin -and (Test-AdminPassword $admin ([string]$body.password))) {
+        $inicial = ([string]$body.password).Trim().ToLower() -eq "geracao2026"
+        Send-Json $res 200 @{ ok=$true; nome=$admin.nome; email=$admin.email; papel=$admin.papel; senha_inicial=$inicial }
       } else { Send-Json $res 401 @{ ok=$false } }
       continue
     }
@@ -174,7 +174,7 @@ while ($listener.IsListening) {
     }
     if ($path -eq "/api/config" -and $method -eq "POST") {
       if (-not (Is-Admin $req)) { Send-Json $res 401 @{ error="unauthorized" }; continue }
-      Send-Json $res 200 (Save-Config (Read-Body $req))
+      Send-Json $res 200 (Save-Config (Read-Body $req) ([string]$req.Headers["X-Admin-Email"]))
       continue
     }
     if ($path -eq "/api/espera/promover" -and $method -eq "POST") {

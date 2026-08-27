@@ -580,7 +580,7 @@
       }
       data = await window.DNJApi.dashboard(adminEmail, password);
       paint({ settings: true });
-      showCfg(true, "Configurações salvas.");
+      showCfg(true, nova ? "Sua senha pessoal foi atualizada." : "Configurações salvas.");
     } catch (err) {
       showCfg(false, err?.message || "Não foi possível salvar. Tente de novo.");
     } finally {
@@ -718,14 +718,16 @@
     qs("first-access-form").nova_senha.focus();
   }
 
+  function needsPersonalPassword(result) {
+    return Boolean(result?.senha_inicial) || isDefaultPassword(password);
+  }
+
   async function enter() {
     const errBox = qs("login-error");
     const dashErr = qs("dash-error");
     if (dashErr) dashErr.hidden = true;
-    if (isDefaultPassword(password)) {
-      showFirstAccess();
-      return;
-    }
+    const warn = qs("pwd-warn");
+    if (warn) warn.hidden = !isDefaultPassword(password);
     firstAccess.hidden = true;
     try {
       await refresh();
@@ -777,7 +779,7 @@
       sessionStorage.setItem(KEY, password);
       firstAccess.hidden = true;
       await enter();
-      toast("Senha atualizada. Avise a coordenação.");
+      toast("Sua senha pessoal foi atualizada.");
     } catch (err) {
       stop(err?.message || "Não foi possível salvar a senha agora. Tente de novo.");
     } finally {
@@ -801,10 +803,13 @@
       sessionStorage.setItem(KEY, password);
       sessionStorage.setItem(EMAIL_KEY, adminEmail);
       sessionStorage.setItem(NAME_KEY, adminName);
-      await enter();
-    } catch (_) {
+      if (needsPersonalPassword(result)) showFirstAccess();
+      else await enter();
+    } catch (err) {
       qs("login-error").hidden = false;
-      qs("login-error").textContent = "E-mail ou senha incorretos.";
+      qs("login-error").textContent = /unauthorized/i.test(err?.message || "")
+        ? "E-mail ou senha incorretos. No primeiro acesso use geracao2026 e crie a sua senha."
+        : (err?.message || "E-mail ou senha incorretos.");
     } finally {
       if (btn) btn.disabled = false;
       if (label) label.textContent = "ENTRAR";
@@ -814,7 +819,8 @@
     window.DNJApi.login(adminEmail, password).then((result) => {
       adminName = result?.nome || adminName;
       if (adminName) sessionStorage.setItem(NAME_KEY, adminName);
-      return enter();
+      if (needsPersonalPassword(result)) showFirstAccess();
+      else return enter();
     }).catch(() => {
       sessionStorage.removeItem(KEY);
       sessionStorage.removeItem(EMAIL_KEY);

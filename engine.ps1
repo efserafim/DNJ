@@ -37,6 +37,28 @@ function Test-AdminEmail($db, [string]$email) {
   } | Select-Object -First 1
 }
 
+function Test-AdminPassword($admin, [string]$pass) {
+  if (-not $admin -or -not $pass) { return $false }
+  $personal = [string]$admin.senha
+  if ($personal) { return $pass -eq $personal }
+  $cfg = Read-Auth
+  return $pass -eq [string]$cfg.adminPassword
+}
+
+function Ensure-AdminPasswords($db) {
+  $cfg = Read-Auth
+  $fallback = [string]$cfg.adminPassword
+  if (-not $fallback) { $fallback = "geracao2026" }
+  $changed = $false
+  foreach ($a in Arr $db.administradores) {
+    if (-not [string]$a.senha) {
+      $a | Add-Member -NotePropertyName senha -NotePropertyValue $fallback -Force
+      $changed = $true
+    }
+  }
+  return $changed
+}
+
 function Ensure-Db {
   if (-not (Test-Path $script:DataDir)) { New-Item -ItemType Directory -Path $script:DataDir | Out-Null }
   if (-not (Test-Path $script:CfgFile)) {
@@ -47,11 +69,13 @@ function Ensure-Db {
     $db = Read-Db
     if (-not $db.onibus -or (Arr $db.onibus).Count -eq 0) { Write-Db (New-Seed) }
     else {
+      $changed = [bool](Ensure-AdminPasswords $db)
       $hasEduardo = @(Arr $db.administradores) | Where-Object { ([string]$_.email).Trim().ToLower() -eq "eduardo@geucaristica.com.br" }
       if (-not $hasEduardo) {
-        $db.administradores = @(Arr $db.administradores) + @([pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true })
-        Write-Db $db
+        $db.administradores = @(Arr $db.administradores) + @([pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true; senha="geracao2026" })
+        $changed = $true
       }
+      if ($changed) { Write-Db $db }
     }
   }
 }
@@ -90,11 +114,11 @@ function New-Seed {
     checkins = @()
     lista_espera = @()
     administradores = @(
-      [pscustomobject]@{ id=(New-Id); nome="Beatriz"; email="beatriz@geucaristica.com.br"; papel="coordenador"; ativo=$true }
-      [pscustomobject]@{ id=(New-Id); nome="Lavinia"; email="lavinia@geucaristica.com.br"; papel="administrador"; ativo=$true }
-      [pscustomobject]@{ id=(New-Id); nome="Duda"; email="duda@geucaristica.com.br"; papel="administrador"; ativo=$true }
-      [pscustomobject]@{ id=(New-Id); nome="Joao Gabriel"; email="joaogabriel@geucaristica.com.br"; papel="administrador"; ativo=$true }
-      [pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true }
+      [pscustomobject]@{ id=(New-Id); nome="Beatriz"; email="beatriz@geucaristica.com.br"; papel="coordenador"; ativo=$true; senha="geracao2026" }
+      [pscustomobject]@{ id=(New-Id); nome="Lavinia"; email="lavinia@geucaristica.com.br"; papel="administrador"; ativo=$true; senha="geracao2026" }
+      [pscustomobject]@{ id=(New-Id); nome="Duda"; email="duda@geucaristica.com.br"; papel="administrador"; ativo=$true; senha="geracao2026" }
+      [pscustomobject]@{ id=(New-Id); nome="Joao Gabriel"; email="joaogabriel@geucaristica.com.br"; papel="administrador"; ativo=$true; senha="geracao2026" }
+      [pscustomobject]@{ id=(New-Id); nome="Eduardo"; email="eduardo@geucaristica.com.br"; papel="administrador"; ativo=$true; senha="geracao2026" }
     )
     logs = @()
   }
@@ -426,7 +450,7 @@ function Remove-Inscricao($id) {
   }
 }
 
-function Save-Config($body) {
+function Save-Config($body, $email) {
   return With-Db {
     param($db)
     $cfg = $db.configuracoes
@@ -440,9 +464,9 @@ function Save-Config($body) {
       $nova = [string]$body.nova_senha
       if ($nova.Length -lt 10) { throw "Senha fraca: use pelo menos 10 caracteres." }
       if ($nova.ToLower() -eq "geracao2026") { throw "Senha fraca: escolha outra senha." }
-      $auth = Read-Auth
-      $auth.adminPassword = $nova
-      $auth | ConvertTo-Json | Set-Content $script:CfgFile -Encoding UTF8
+      $admin = Test-AdminEmail $db $email
+      if (-not $admin) { throw "unauthorized" }
+      $admin | Add-Member -NotePropertyName senha -NotePropertyValue $nova -Force
     }
     Add-Log $db "configuracao_alterada" "configuracoes" "evento" $null $cfg
     return $cfg
