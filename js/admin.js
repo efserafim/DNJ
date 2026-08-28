@@ -199,11 +199,30 @@
   }
   function moveBox(person) {
     if (person.status === "cancelada") return "";
-    return `<select class="admin-select" aria-label="Mover ${esc(person.nome_completo)}" data-move-sel="${person.id}">
-        <option value="">Mover para…</option>
+    return `<select class="admin-select admin-select-move" aria-label="Mover ${esc(person.nome_completo)}" data-move-sel="${person.id}">
+        <option value="">→ ônibus</option>
         ${busOptions(person.onibus_id)}
-      </select>
-      <button class="btn-admin" data-move="${person.id}" type="button">Mover</button>`;
+      </select>`;
+  }
+  function bindMoveSelects(root) {
+    (root || qs("rows")).querySelectorAll("[data-move-sel]").forEach((sel) => {
+      if (sel.dataset.bound) return;
+      sel.dataset.bound = "1";
+      sel.addEventListener("change", async () => {
+        const destId = sel.value;
+        if (!destId) return;
+        const id = sel.dataset.moveSel;
+        sel.disabled = true;
+        try {
+          await moverInscrito(id, destId);
+        } catch (err) {
+          toast(err?.message || "Não foi possível mover.", "err");
+        } finally {
+          sel.disabled = false;
+          sel.value = "";
+        }
+      });
+    });
   }
   async function moverInscrito(id, destId) {
     if (!id || !destId) {
@@ -379,10 +398,10 @@
       <td data-label="Presença"><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
       <td class="cell-actions" data-label="Ações">
         <div class="row-actions">
-          <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
+          <button class="btn-admin btn-compact" data-view-ins="${i.id}" type="button" title="Ver inscrição">Ver</button>
           ${moveBox(i)}
-          ${i.status === "cancelada" ? "" : `<button class="btn-admin" data-cancel="${i.id}" type="button">Cancelar</button>`}
-          <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+          ${i.status === "cancelada" ? "" : `<button class="btn-admin btn-compact" data-cancel="${i.id}" type="button" title="Cancelar inscrição">Canc.</button>`}
+          <button class="btn-admin btn-danger btn-compact" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button" title="Excluir inscrição">Excl.</button>
         </div>
       </td>
     </tr>`;
@@ -390,6 +409,7 @@
     qs("rows").querySelectorAll("tr[draggable]").forEach((tr) => {
       tr.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/inscricao", tr.dataset.id));
     });
+    bindMoveSelects(qs("rows"));
   }
   function renderWait() {
     const ids = (data.espera || []).map((e) => e.inscricao_id);
@@ -403,8 +423,10 @@
           <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
           <td data-label="Desde">${when(i.criado_em)}</td>
           <td data-label="Ações" class="cell-actions">
-            <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
-            <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+            <div class="row-actions row-actions-inline">
+              <button class="btn-admin btn-compact" data-view-ins="${i.id}" type="button" title="Ver inscrição">Ver</button>
+              <button class="btn-admin btn-danger btn-compact" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button" title="Excluir inscrição">Excl.</button>
+            </div>
           </td>
         </tr>`).join("")
       : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
@@ -490,7 +512,7 @@
     }
     qs("bus-interior").hidden = false;
     qs("bus-interior").innerHTML = `<h2>${esc(o.nome)}${o.ativo === false ? " · desativado" : ""}</h2>
-      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · ${o.ativo === false ? "não recebe novas inscrições — reative em Ajustes" : "use Mover para trocar de ônibus"}</p>
+      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · ${o.ativo === false ? "não recebe novas inscrições — reative em Ajustes" : "escolha o ônibus no menu para mover"}</p>
       <div class="seat-map">${seats.join("")}</div>
       <div class="table-wrap" style="margin-top:16px"><table>
         <thead><tr><th>Assento</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>WhatsApp</th><th>Código</th><th>Presença</th><th>Mover</th></tr></thead>
@@ -505,6 +527,7 @@
           <td class="cell-actions"><div class="row-actions">${moveBox(p)}</div></td>
         </tr>`).join("") || `<tr><td colspan="8" class="empty">Nenhum ocupante neste ônibus.</td></tr>`}</tbody>
       </table></div>`;
+    bindMoveSelects(qs("bus-interior"));
   }
 
   function paint(opts = {}) {
@@ -548,16 +571,6 @@
   qs("bus-detail-cards").addEventListener("click", (e) => {
     const card = e.target.closest(".bus-card");
     if (card) openBus(card.dataset.bus);
-  });
-  qs("bus-interior").addEventListener("click", async (e) => {
-    const mover = e.target.closest("[data-move]");
-    if (!mover) return;
-    const sel = qs("bus-interior").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
-    try {
-      await moverInscrito(mover.dataset.move, sel?.value);
-    } catch (err) {
-      toast(err?.message || "Não foi possível mover.", "err");
-    }
   });
   qs("search").addEventListener("input", () => renderPeople(true));
   ["f-status","f-presente","f-onibus","f-faixa","f-menor"].forEach((id) => qs(id).addEventListener("change", () => renderPeople(true)));
@@ -636,11 +649,6 @@
           await refresh();
           toast("Inscrição excluída.");
         }
-      }
-      const mover = e.target.closest("[data-move]");
-      if (mover) {
-        const sel = qs("rows").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
-        await moverInscrito(mover.dataset.move, sel?.value);
       }
     } catch (err) {
       toast(err?.message || "Não foi possível concluir a ação.", "err");
