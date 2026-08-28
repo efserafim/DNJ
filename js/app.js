@@ -9,6 +9,14 @@
   let current = null;
   let mine = null;
 
+  function isWaitlist(record) {
+    return record?.status === "lista_espera";
+  }
+
+  function isConfirmed(record) {
+    return record?.status === "confirmada";
+  }
+
   function closeDialogs() {
     if (ticket.open) ticket.close();
     if (lookup.open) lookup.close();
@@ -29,7 +37,7 @@
   }
 
   function shareText(record) {
-    const wait = record?.status === "lista_espera";
+    const wait = isWaitlist(record);
     const waitByAge = wait && Number(record?.idade) >= (cfg.waitlistFromAge ?? 35);
     return [
       wait ? "Estou na lista de espera do DNJ 2026." : "Estou inscrito no DNJ 2026!",
@@ -65,6 +73,35 @@
     try { localStorage.setItem(KEY, JSON.stringify(record)); } catch (_) {}
   }
 
+  function fillTicketModal(record) {
+    document.getElementById("ticket-name").textContent = record.nome_completo;
+    document.getElementById("ticket-code").textContent = record.codigo_inscricao;
+    document.getElementById("ticket-whatsapp").textContent = record.whatsapp || "—";
+    document.getElementById("ticket-idade").textContent = record.idade ? `${record.idade} anos` : "—";
+    document.getElementById("ticket-onibus").textContent = record.onibus_nome || "—";
+    document.getElementById("ticket-assento").textContent = record.assento || "—";
+    const qr = document.getElementById("ticket-qr");
+    const code = String(record.codigo_inscricao);
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=H&margin=8&data=${encodeURIComponent(code)}`;
+    qr.alt = `QR Code ${code}`;
+  }
+
+  function updateConfirmActions(record) {
+    const wait = isWaitlist(record);
+    const btnView = document.getElementById("btn-view");
+    const btnPrint = document.getElementById("btn-print");
+    const codeLabel = document.getElementById("confirm-code-label");
+    const waitHint = document.getElementById("confirm-wait-hint");
+    if (btnView) btnView.hidden = wait;
+    if (btnPrint) btnPrint.hidden = wait;
+    if (waitHint) waitHint.hidden = !wait;
+    if (codeLabel) {
+      codeLabel.textContent = wait
+        ? "Código para consultar · toque para copiar"
+        : "Código · toque para copiar";
+    }
+  }
+
   function fillTicket(record, persist = false) {
     if (!record?.codigo_inscricao) return;
     current = record;
@@ -72,7 +109,7 @@
       mine = record;
       remember(record);
     }
-    const wait = record.status === "lista_espera";
+    const wait = isWaitlist(record);
     const waitByAge = wait && Number(record.idade) >= (cfg.waitlistFromAge ?? 35);
     const confirmInner = document.querySelector(".confirm-inner");
     const confirmTitle = document.getElementById("confirm-title");
@@ -80,15 +117,13 @@
     const waitKicker = document.getElementById("waitlist-alert-kicker");
     const waitTitle = document.getElementById("waitlist-alert-title");
     const waitText = document.getElementById("waitlist-alert-text");
-    const ticketBanner = document.getElementById("ticket-wait-banner");
     const ticketCard = document.querySelector(".ticket-card");
 
     confirmInner?.classList.toggle("is-waitlist", wait);
     confirmInner?.classList.toggle("is-waitlist-age", waitByAge);
-    ticketCard?.classList.toggle("is-waitlist", wait);
+    ticketCard?.classList.toggle("is-waitlist", false);
 
     if (waitAlert) waitAlert.hidden = !wait;
-    if (ticketBanner) ticketBanner.hidden = !wait;
 
     if (wait) {
       if (confirmTitle) confirmTitle.textContent = "Lista de espera";
@@ -100,8 +135,8 @@
       }
       if (waitText) {
         waitText.innerHTML = waitByAge
-          ? "Esta caravana do Setor Juventude prioriza jovens de <strong>13 a 34 anos</strong>. Sua inscrição foi registrada com código, mas <strong>sem assento no ônibus por enquanto</strong>. Se surgir vaga, a coordenação avisa pelo WhatsApp."
-          : "Sua inscrição foi registrada e você está na fila. Se alguém desistir ou surgir vaga, a coordenação entra em contato pelo WhatsApp.";
+          ? "Esta caravana do <strong>Grupo Jovem Geração Eucarística</strong> prioriza jovens de <strong>13 a 34 anos</strong>. Você está registrado na fila, mas <strong>ainda não tem ingresso</strong>. Se surgir vaga, a coordenação avisa pelo WhatsApp e libera seu ingresso com QR Code."
+          : "Você está na fila, mas <strong>ainda não tem ingresso</strong>. Se surgir vaga, a coordenação entra em contato pelo WhatsApp e libera seu ingresso com QR Code.";
       }
     } else if (confirmTitle) {
       confirmTitle.textContent = "Inscrição confirmada!";
@@ -110,39 +145,38 @@
     document.getElementById("confirm-code").textContent = record.codigo_inscricao;
     document.getElementById("confirm-lead").textContent = wait
       ? (waitByAge
-        ? "Você está inscrito, aguardando possível vaga na caravana."
-        : "Você está inscrito, aguardando vaga no ônibus.")
+        ? "Você está na fila, aguardando possível vaga na caravana."
+        : "Você está na fila, aguardando vaga no ônibus.")
       : "Sua inscrição no DNJ 2026 está confirmada.";
     document.getElementById("confirm-bus").textContent = wait
-      ? (waitByAge ? "Sem ônibus · fila por idade (35+)" : "Sem ônibus · aguardando vaga")
+      ? (waitByAge ? "Sem ingresso · fila por idade (35+)" : "Sem ingresso · aguardando vaga")
       : [record.onibus_nome, record.assento ? `Assento ${record.assento}` : "", record.idade ? `${record.idade} anos` : ""]
           .filter(Boolean).join(" · ");
-    document.getElementById("ticket-name").textContent = record.nome_completo;
-    document.getElementById("ticket-code").textContent = record.codigo_inscricao;
-    document.getElementById("ticket-whatsapp").textContent = record.whatsapp || "—";
-    document.getElementById("ticket-idade").textContent = record.idade ? `${record.idade} anos` : "—";
-    document.getElementById("ticket-onibus").textContent = record.onibus_nome || "Lista de espera";
-    document.getElementById("ticket-assento").textContent = record.assento || "—";
-    const qr = document.getElementById("ticket-qr");
-    const code = String(record.codigo_inscricao);
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=H&margin=8&data=${encodeURIComponent(code)}`;
-    qr.alt = `QR Code ${code}`;
+
+    updateConfirmActions(record);
+
+    if (isConfirmed(record)) fillTicketModal(record);
     window.DNJTermo?.fill(record);
   }
 
   function openTicket(record) {
     const row = record || current || mine;
-    if (!row?.codigo_inscricao) return;
-    fillTicket(row);
+    if (!row?.codigo_inscricao || isWaitlist(row)) return;
+    fillTicketModal(row);
     openDialog(ticket);
   }
 
   function showMyTicketShortcut() {
     const btn = document.getElementById("btn-my-ticket");
     const link = document.getElementById("btn-lookup");
-    const hasMine = Boolean(mine?.codigo_inscricao);
-    if (btn) btn.hidden = !hasMine;
-    if (link) link.textContent = hasMine ? "Consultar outra inscrição" : "Já me inscrevi · ver meu ingresso";
+    const hasConfirmed = Boolean(mine?.codigo_inscricao && isConfirmed(mine));
+    const hasWait = Boolean(mine?.codigo_inscricao && isWaitlist(mine));
+    if (btn) btn.hidden = !hasConfirmed;
+    if (link) {
+      if (hasConfirmed) link.textContent = "Consultar outra inscrição";
+      else if (hasWait) link.textContent = "Consultar minha lista de espera";
+      else link.textContent = "Já me inscrevi · ver meu ingresso";
+    }
   }
 
   function restoreSaved() {
@@ -162,6 +196,14 @@
     form?.reset();
     document.getElementById("lookup-error").hidden = true;
     document.getElementById("lookup-result").hidden = true;
+  }
+
+  function updateLookupResult(row) {
+    const lookupTicketBtn = document.getElementById("lookup-open-ticket");
+    const lookupWaitNote = document.getElementById("lookup-wait-note");
+    const wait = isWaitlist(row);
+    if (lookupTicketBtn) lookupTicketBtn.hidden = wait;
+    if (lookupWaitNote) lookupWaitNote.hidden = !wait;
   }
 
   function tickCountdown() {
@@ -193,8 +235,8 @@
 
   function printTicket() {
     const row = current || mine;
-    if (!row?.codigo_inscricao) return;
-    fillTicket(row);
+    if (!row?.codigo_inscricao || isWaitlist(row)) return;
+    fillTicketModal(row);
     openDialog(ticket);
     setTimeout(() => window.print(), 250);
   }
@@ -238,15 +280,21 @@
       document.getElementById("lookup-code").textContent = row.codigo_inscricao;
       document.getElementById("lookup-meta").textContent = [
         row.idade ? `${row.idade} anos` : "",
-        row.onibus_nome || row.status,
+        isWaitlist(row) ? "Lista de espera" : (row.onibus_nome || row.status),
         row.assento ? `Assento ${row.assento}` : "",
-        row.presente ? "Check-in realizado" : "Aguardando o dia",
+        row.presente ? "Check-in realizado" : (isWaitlist(row) ? "Sem ingresso ainda" : "Aguardando o dia"),
       ].filter(Boolean).join(" · ");
+      updateLookupResult(row);
       const lookupTermo = document.getElementById("lookup-termo");
       const lookupNote = document.getElementById("lookup-minor-note");
       const isMinor = window.DNJTermo.isMinor(row);
       lookupTermo.hidden = !isMinor;
       if (lookupNote) lookupNote.hidden = !isMinor;
+      if (isConfirmed(row)) {
+        mine = row;
+        remember(row);
+        showMyTicketShortcut();
+      }
     } catch (_) {
       result.hidden = true;
       errorBox.hidden = false;
