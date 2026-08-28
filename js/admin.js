@@ -86,12 +86,86 @@
     }
   }
 
+  function whenDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR");
+  }
+
+  function parseGuardian(obs) {
+    const note = String(obs || "");
+    const nome = (note.match(/Responsável:\s*([^|]+)/i) || [])[1];
+    const cpf = (note.match(/CPF:\s*([^|]+)/i) || [])[1];
+    const parentesco = (note.match(/Parentesco:\s*([^|]+)/i) || [])[1];
+    const whatsapp = (note.match(/WhatsApp resp\.:\s*([^|]+)/i) || [])[1];
+    return {
+      nome: (nome || "").trim(),
+      cpf: (cpf || "").trim(),
+      parentesco: (parentesco || "").trim(),
+      whatsapp: (whatsapp || "").trim(),
+    };
+  }
+
+  function inscricaoRows(i) {
+    const g = parseGuardian(i.observacoes);
+    const minor = isMinorRow(i);
+    return [
+      ["Código", i.codigo_inscricao],
+      ["Nome", i.nome_completo],
+      ["Nascimento", whenDate(i.data_nascimento)],
+      ["Idade", i.idade ? `${i.idade} anos` : "—"],
+      ["Sexo", i.sexo || "—"],
+      ["CPF", i.cpf || "—"],
+      ["WhatsApp", i.whatsapp || "—"],
+      ["E-mail", i.email || "—"],
+      ["Paróquia", i.paroquia || "—"],
+      ["Comunidade", i.comunidade || "—"],
+      ["Grupo / movimento", i.grupo_movimento || "—"],
+      ["Cidade", [i.cidade, i.bairro].filter(Boolean).join(" · ") || "—"],
+      ["Geração Eucarística", i.membro_geracao_eucaristica ? "Sim" : "Não"],
+      ["Já participou do DNJ", i.ja_participou_dnj ? "Sim" : "Não"],
+      ["Como conheceu", i.como_conheceu || "—"],
+      i.necessidade_especifica ? ["Necessidade específica", i.necessidade_especifica] : null,
+      ["Status", String(i.status || "").replace("_", " ")],
+      ["Ônibus", i.onibus_nome || "—"],
+      ["Assento", i.assento || "—"],
+      ["Faixa etária", i.faixa_nome || "—"],
+      ["Presença", i.presente ? "Presente" : "Aguardando check-in"],
+      minor ? ["Termo (menor)", i.termo_enviado ? "Recebido" : "Pendente"] : null,
+      g.nome ? ["Responsável", g.nome] : null,
+      g.cpf ? ["CPF responsável", g.cpf] : null,
+      g.parentesco ? ["Parentesco", g.parentesco] : null,
+      g.whatsapp ? ["WhatsApp responsável", g.whatsapp] : null,
+      ["Inscrito em", when(i.criado_em)],
+    ].filter(Boolean);
+  }
+
+  function openInscricao(id) {
+    const person = data.inscricoes.find((i) => i.id === id);
+    if (!person) return;
+    qs("inscricao-title").textContent = person.nome_completo;
+    qs("inscricao-code").textContent = person.codigo_inscricao || "—";
+    qs("inscricao-body").innerHTML = inscricaoRows(person)
+      .map(([k, v]) => `<p><strong>${esc(k)}</strong><span>${esc(v)}</span></p>`)
+      .join("");
+    qs("view-inscricao").showModal();
+  }
+
+  function closeInscricao() {
+    if (qs("view-inscricao").open) qs("view-inscricao").close();
+  }
+
+  function isMinorRow(i) {
+    return Number(i.idade) > 0 && Number(i.idade) < 18;
+  }
+
   function filteredPeople() {
     const q = (qs("search")?.value || "").toLowerCase().trim();
     const st = qs("f-status")?.value;
     const pr = qs("f-presente")?.value;
     const ob = qs("f-onibus")?.value;
     const fx = qs("f-faixa")?.value;
+    const mn = qs("f-menor")?.value;
     const list = (data.inscricoes || []).filter((i) => {
       const blob = `${i.nome_completo} ${i.codigo_inscricao} ${i.whatsapp} ${i.cidade} ${i.comunidade} ${i.grupo_movimento}`.toLowerCase();
       if (q && !blob.includes(q)) return false;
@@ -100,6 +174,8 @@
       if (pr === "0" && i.presente) return false;
       if (ob && i.onibus_id !== ob) return false;
       if (fx && i.faixa_etaria_id !== fx) return false;
+      if (mn === "1" && !isMinorRow(i)) return false;
+      if (mn === "termo" && (!isMinorRow(i) || i.termo_enviado)) return false;
       return true;
     });
     const dir = sort.dir === "asc" ? 1 : -1;
@@ -177,15 +253,21 @@
     const cap = s.capacidade ?? 0;
     const conf = s.confirmadas ?? 0;
     const pres = s.presentes ?? 0;
+    const minors = (data.inscricoes || []).filter(isMinorRow);
+    const termoPend = minors.filter((i) => !i.termo_enviado).length;
     qs("hello").textContent = adminName ? `${greet}, ${adminName}!` : (data.saudacao || "Olá, administrador!");
-    qs("stats").innerHTML = [
+    const stats = [
       ["Inscritos", s.total ?? 0, "Cadastros no sistema", "ink"],
       ["Confirmados", conf, cap ? `${cap} lugares no total` : "Com assento garantido", "leaf"],
       ["Presentes", pres, conf ? `${Math.round((100 * pres) / conf)}% dos confirmados` : "Check-ins feitos", "gold"],
       ["Vagas livres", s.vagas ?? 0, "Assentos disponíveis", "orange"],
       ["Lista de espera", s.espera ?? 0, "Aguardando vaga", "wine"],
       ["Novos hoje", s.hoje ?? 0, "Inscrições de hoje", "ink"],
-    ].map(([label, value, hint, tone]) =>
+    ];
+    if (minors.length) {
+      stats.push(["Termos pendentes", termoPend, `${minors.length} menor(es) de 18 anos`, termoPend ? "wine" : "leaf"]);
+    }
+    qs("stats").innerHTML = stats.map(([label, value, hint, tone]) =>
       `<article class="stat is-${tone}"><b>${value}</b><span>${label}</span><i>${esc(hint)}</i></article>`).join("");
 
     const box = qs("occupancy");
@@ -278,10 +360,17 @@
       th.dataset.dir = on ? sort.dir : "";
     });
     const statusClass = (st) => (st === "confirmada" ? "badge-ok" : st === "lista_espera" ? "badge-wait" : "badge-off");
-    qs("rows").innerHTML = list.map((i, n) => `<tr draggable="true" data-id="${i.id}" class="${i.presente ? "is-present" : ""}">
+    qs("rows").innerHTML = list.map((i, n) => {
+      const minor = isMinorRow(i);
+      const rowClass = [i.presente ? "is-present" : "", minor ? "is-minor" : "", minor && !i.termo_enviado ? "is-minor-pending" : ""].filter(Boolean).join(" ");
+      const termoCell = minor
+        ? `<button class="pill termo-pill ${i.termo_enviado ? "is-on" : "is-warn"}" data-termo="${i.id}" type="button">${i.termo_enviado ? "Recebido" : "Pendente"}</button>`
+        : "—";
+      return `<tr draggable="true" data-id="${i.id}" class="${rowClass}">
       <td data-label="Nº">${n + 1}</td>
-      <td data-label="Nome"><strong>${esc(i.nome_completo)}</strong></td>
+      <td data-label="Nome"><strong>${esc(i.nome_completo)}</strong>${minor ? `<span class="badge badge-minor">Menor</span>` : ""}</td>
       <td data-label="Idade">${i.idade || "—"}</td>
+      <td data-label="Termo">${termoCell}</td>
       <td data-label="Faixa">${esc(i.faixa_nome || "—")}</td>
       <td data-label="Ônibus">${esc(i.onibus_nome || "—")}</td>
       <td data-label="WhatsApp">${waCell(i.whatsapp)}</td>
@@ -290,12 +379,14 @@
       <td data-label="Presença"><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
       <td class="cell-actions" data-label="Ações">
         <div class="row-actions">
+          <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
           ${moveBox(i)}
           ${i.status === "cancelada" ? "" : `<button class="btn-admin" data-cancel="${i.id}" type="button">Cancelar</button>`}
           <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
         </div>
       </td>
-    </tr>`).join("");
+    </tr>`;
+    }).join("");
     qs("rows").querySelectorAll("tr[draggable]").forEach((tr) => {
       tr.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/inscricao", tr.dataset.id));
     });
@@ -311,7 +402,10 @@
           <td data-label="Idade">${i.idade || "—"}</td>
           <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
           <td data-label="Desde">${when(i.criado_em)}</td>
-          <td data-label="Ações" class="cell-actions"><button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button></td>
+          <td data-label="Ações" class="cell-actions">
+            <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
+            <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+          </td>
         </tr>`).join("")
       : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
   }
@@ -466,10 +560,10 @@
     }
   });
   qs("search").addEventListener("input", () => renderPeople(true));
-  ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => qs(id).addEventListener("change", () => renderPeople(true)));
+  ["f-status","f-presente","f-onibus","f-faixa","f-menor"].forEach((id) => qs(id).addEventListener("change", () => renderPeople(true)));
   qs("btn-clear").addEventListener("click", () => {
     qs("search").value = "";
-    ["f-status","f-presente","f-onibus","f-faixa"].forEach((id) => { qs(id).value = ""; });
+    ["f-status","f-presente","f-onibus","f-faixa","f-menor"].forEach((id) => { qs(id).value = ""; });
     renderPeople(true);
   });
   document.querySelectorAll(".th-sort").forEach((th) => {
@@ -500,11 +594,28 @@
     }
   });
 
+  qs("btn-close-inscricao")?.addEventListener("click", closeInscricao);
+  qs("btn-close-inscricao-bottom")?.addEventListener("click", closeInscricao);
+
   qs("rows").addEventListener("click", async (e) => {
+    const viewIns = e.target.closest("[data-view-ins]");
     const check = e.target.closest("[data-check]");
+    const termoBtn = e.target.closest("[data-termo]");
     const cancel = e.target.closest("[data-cancel]");
     const del = e.target.closest("[data-del]");
     try {
+      if (viewIns) {
+        openInscricao(viewIns.dataset.viewIns);
+        return;
+      }
+      if (termoBtn) {
+        const person = data.inscricoes.find((i) => i.id === termoBtn.dataset.termo);
+        if (!person) return;
+        const next = !person.termo_enviado;
+        await window.DNJApi.update(adminEmail, password, termoBtn.dataset.termo, { termo_enviado: next });
+        await refresh();
+        toast(next ? "Termo marcado como recebido." : "Termo marcado como pendente.");
+      }
       if (check) {
         await window.DNJApi.checkin(adminEmail, password, check.dataset.check);
         await refresh();
@@ -536,7 +647,12 @@
     }
   });
   qs("wait-rows").addEventListener("click", async (e) => {
+    const viewIns = e.target.closest("[data-view-ins]");
     const del = e.target.closest("[data-del]");
+    if (viewIns) {
+      openInscricao(viewIns.dataset.viewIns);
+      return;
+    }
     if (!del) return;
     try {
       const yes = await ask(`Excluir ${del.dataset.nome} da lista de espera?`, { title: "Excluir da espera", ok: "EXCLUIR", danger: true });
@@ -650,7 +766,9 @@
   function exportRows(kind) {
     const list = filteredPeople();
     const rows = list.map((i) => ({
-      codigo: i.codigo_inscricao, nome: i.nome_completo, idade: i.idade, faixa: i.faixa_nome,
+      codigo: i.codigo_inscricao, nome: i.nome_completo, idade: i.idade, menor: isMinorRow(i) ? "sim" : "nao",
+      termo: isMinorRow(i) ? (i.termo_enviado ? "recebido" : "pendente") : "",
+      faixa: i.faixa_nome,
       onibus: i.onibus_nome, whatsapp: i.whatsapp, cidade: i.cidade, status: i.status, presente: i.presente ? "sim" : "nao",
     }));
     if (kind === "csv") {
@@ -675,6 +793,8 @@
           <td class="code">${esc(r.codigo)}</td>
           <td>${esc(r.nome)}</td>
           <td>${esc(r.idade)}</td>
+          <td>${esc(r.menor)}</td>
+          <td>${esc(r.termo)}</td>
           <td>${esc(r.faixa)}</td>
           <td>${esc(r.onibus)}</td>
           <td>${esc(r.whatsapp)}</td>
@@ -682,7 +802,7 @@
           <td>${esc(r.status)}</td>
           <td>${esc(r.presente)}</td>
         </tr>`).join("")
-      : `<tr><td colspan="9" class="empty">Nenhum inscrito neste filtro.</td></tr>`;
+      : `<tr><td colspan="11" class="empty">Nenhum inscrito neste filtro.</td></tr>`;
     const win = window.open("", "_blank");
     win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>Caravana Geração Eucarística ao DNJ · Inscritos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -722,7 +842,7 @@
 </header>
 <div class="meta"><span><b>Lista de inscritos</b><br>18 de outubro de 2026 · Orla do Marine — Maricá</span><span>Gerado em ${esc(stamp)}<br>${rows.length} registro(s)</span></div>
 <main><table>
-  <thead><tr><th>Código</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>Ônibus</th><th>WhatsApp</th><th>Cidade</th><th>Status</th><th>Presente</th></tr></thead>
+  <thead><tr><th>Código</th><th>Nome</th><th>Idade</th><th>Menor</th><th>Termo</th><th>Faixa</th><th>Ônibus</th><th>WhatsApp</th><th>Cidade</th><th>Status</th><th>Presente</th></tr></thead>
   <tbody>${bodyRows}</tbody>
 </table></main>
 <footer>

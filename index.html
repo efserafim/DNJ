@@ -152,6 +152,7 @@
             <li>DNJ</li>
             <li>Termos</li>
           </ol>
+          <p class="step-required-note">Campos com <span class="req-mark">*</span> são obrigatórios.</p>
         </div>
       </div>
 
@@ -160,13 +161,13 @@
           <legend>Quem é você nessa caminhada?</legend>
           <p class="step-intro">Cada nome aqui é uma história que Deus está escrevendo.</p>
 
-          <label class="field">
+          <label class="field field-req">
             <span>Nome completo</span>
             <input type="text" name="nome_completo" autocomplete="name" required maxlength="120" />
           </label>
 
           <div class="grid-2">
-            <label class="field">
+            <label class="field field-req">
               <span>Data de nascimento</span>
               <input type="date" name="data_nascimento" required />
             </label>
@@ -177,7 +178,7 @@
           </div>
           <p class="youth-pref-note" id="youth-pref-note" hidden>Esta caravana do Setor Juventude prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, a inscrição entra na lista de espera.</p>
 
-          <label class="field">
+          <label class="field field-req">
             <span>Sexo</span>
             <select name="sexo" required>
               <option value="" disabled selected>Selecione</option>
@@ -186,17 +187,17 @@
             </select>
           </label>
 
-          <label class="field">
-            <span>CPF (opcional)</span>
+          <label class="field field-opt">
+            <span>CPF</span>
             <input type="text" name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
           </label>
 
-          <label class="field">
+          <label class="field field-req">
             <span>WhatsApp</span>
             <input type="tel" name="whatsapp" inputmode="numeric" placeholder="(21) 99999-9999" required />
           </label>
 
-          <label class="field">
+          <label class="field field-opt">
             <span>E-mail</span>
             <input type="email" name="email" autocomplete="email" placeholder="seuemail@exemplo.com" />
           </label>
@@ -210,20 +211,20 @@
             <span>Paróquia</span>
             <input type="text" name="paroquia" maxlength="120" value="Paróquia Santo Antônio — Bacaxá" />
           </label>
-          <label class="field">
+          <label class="field field-req">
             <span>Comunidade</span>
-            <input type="text" name="comunidade" maxlength="120" placeholder="Igreja Matriz ou Capela" />
+            <input type="text" name="comunidade" maxlength="120" placeholder="Igreja Matriz ou Capela" required />
           </label>
-          <label class="field">
+          <label class="field field-opt">
             <span>Grupo ou movimento</span>
             <input type="text" name="grupo_movimento" maxlength="120" />
           </label>
           <div class="grid-2">
-            <label class="field">
+            <label class="field field-req">
               <span>Cidade</span>
-              <input type="text" name="cidade" maxlength="80" value="Saquarema" />
+              <input type="text" name="cidade" maxlength="80" value="Saquarema" required />
             </label>
-            <label class="field">
+            <label class="field field-opt">
               <span>Bairro</span>
               <input type="text" name="bairro" maxlength="80" />
             </label>
@@ -245,9 +246,9 @@
             <label><input type="radio" name="ja_participou_dnj" value="false" checked /> Não</label>
           </fieldset>
 
-          <label class="field">
+          <label class="field field-req">
             <span>Como ficou sabendo do DNJ 2026?</span>
-            <select name="como_conheceu">
+            <select name="como_conheceu" required>
               <option value="" disabled selected>Selecione</option>
               <option>Geração Eucarística</option>
               <option>Paróquia / missa</option>
@@ -258,7 +259,7 @@
             </select>
           </label>
 
-          <label class="field">
+          <label class="field field-opt">
             <span>Possui alguma necessidade específica que a coordenação da caravana deva conhecer?</span>
             <textarea name="necessidade_especifica" rows="3" maxlength="500" placeholder="Acessibilidade, alimentação, saúde..."></textarea>
           </label>
@@ -269,19 +270,19 @@
           <p class="step-intro">Confira seus dados e autorize o uso só para organizar a ida da nossa caravana ao DNJ 2026.</p>
           <div class="review" id="review-box"></div>
           <div id="bloco-menor" class="minor-form" hidden>
-            <p class="minor-form-alert">Atenção: menor de 18 anos só embarca com o termo assinado pelo responsável e enviado no WhatsApp da Beatriz · 22 92005-0790.</p>
+            <p class="minor-form-alert">Menor de 18 anos: baixe o termo com o código abaixo, assine (papel ou gov.br) e envie para a Beatriz · 22 92005-0790.</p>
             <h3>Dados do responsável</h3>
-            <p>Preencha os dados abaixo e confira o termo na sequência. Depois da inscrição, baixe o PDF final, peça a assinatura e envie a foto (ou o PDF) para a Beatriz.</p>
-            <label class="field">
+            <p>Preencha os dados e confira o termo. O código já aparece no PDF — use-o na consulta da inscrição.</p>
+            <label class="field field-req">
               <span>Nome completo do responsável</span>
               <input type="text" name="nome_responsavel" maxlength="120" autocomplete="name" />
             </label>
             <div class="grid-2">
-              <label class="field">
+              <label class="field field-req">
                 <span>CPF do responsável</span>
                 <input type="text" name="cpf_responsavel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
               </label>
-              <label class="field">
+              <label class="field field-req">
                 <span>Parentesco</span>
                 <select name="parentesco_responsavel">
                   <option value="" disabled selected>Selecione</option>
@@ -294,13 +295,22 @@
                 </select>
               </label>
             </div>
-            <label class="field">
+            <label class="field field-req">
               <span>WhatsApp do responsável</span>
               <input type="tel" name="whatsapp_responsavel" inputmode="numeric" placeholder="(21) 99999-9999" />
             </label>
+            <div class="gov-sign-help">
+              <h4>Como assinar pelo gov.br</h4>
+              <ol>
+                <li>Baixe o rascunho em PDF abaixo — ele já traz o código da inscrição.</li>
+                <li>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a> com conta gov.br (nível prata ou ouro).</li>
+                <li>Envie o PDF, posicione a assinatura eletrônica e baixe o documento assinado.</li>
+                <li>Mande a foto nítida ou o PDF assinado para a Beatriz no WhatsApp <a href="https://wa.me/5522920050790" target="_blank" rel="noopener">22 92005-0790</a>.</li>
+              </ol>
+            </div>
             <div class="termo-preview-wrap">
               <h4>Termo de autorização</h4>
-              <p class="termo-preview-lead">Este documento atualiza conforme você preenche. O responsável deve assinar e enviar para a Beatriz.</p>
+              <p class="termo-preview-lead">Atualiza conforme você preenche. Imprima ou salve como PDF antes de confirmar.</p>
               <article id="termo-preview" class="termo-preview" aria-label="Prévia do termo de autorização">
                 <header class="termo-head">
                   <p class="termo-org">Caravana Geração Eucarística ao DNJ</p>
@@ -314,7 +324,7 @@
                     <li><span>Nascimento / idade</span> <strong id="preview-termo-menor-nasc">—</strong></li>
                     <li><span>CPF do menor</span> <strong id="preview-termo-menor-cpf">não informado</strong></li>
                     <li><span>WhatsApp</span> <strong id="preview-termo-menor-whatsapp">—</strong></li>
-                    <li><span>Código da inscrição</span> <strong id="preview-termo-codigo">Gerado após confirmar</strong></li>
+                    <li><span>Código da inscrição</span> <strong id="preview-termo-codigo">—</strong></li>
                   </ul>
                   <p>O evento <strong>DNJ 2026</strong> ocorre em <strong>18 de outubro de 2026</strong>, na Orla do Marine — Maricá, com saída da caravana às <strong>7h</strong>. O DNJ é promovido pelo Setor Juventude — Arquidiocese de Niterói. Esta caravana é organizada pelo Grupo Jovem Geração Eucarística, Paróquia Santo Antônio — Bacaxá, Saquarema/RJ.</p>
                   <p>Autorizo o(a) menor a viajar e permanecer sob a responsabilidade de <strong id="preview-termo-coord-nome">Ana Beatriz Moreira dos Santos</strong>, CPF <strong id="preview-termo-coord-cpf">119.876.987-46</strong>, responsável pela caravana, e da equipe de coordenação, inclusive para acionar atendimento de saúde em caso de emergência.</p>
@@ -328,20 +338,21 @@
                     <p class="termo-sign-name" id="preview-termo-sign-name"></p>
                   </div>
                   <aside class="termo-gov">
-                    <p><strong>Devolver para Beatriz Moreira · WhatsApp 22 92005-0790</strong></p>
-                    <p>Foto nítida do termo assinado ou PDF. Sem este envio, o menor não embarca.</p>
+                    <p><strong>Assinatura pelo gov.br</strong></p>
+                    <p>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a>, envie este PDF, assine e devolva para Beatriz · WhatsApp 22 92005-0790.</p>
+                    <p>Sem o termo assinado, o menor não embarca.</p>
                   </aside>
                 </div>
                 <p class="termo-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>
               </article>
               <button type="button" class="btn-ghost" id="btn-preview-termo">Baixar rascunho em PDF</button>
             </div>
-            <label class="terms">
+            <label class="terms terms-req">
               <input type="checkbox" name="ciente_termo_menor" />
               <span>Estou ciente de que o responsável deve assinar o termo e enviar a foto nítida (ou o PDF) no WhatsApp da Beatriz (22 92005-0790).</span>
             </label>
           </div>
-          <label class="terms">
+          <label class="terms terms-req">
             <input type="checkbox" name="aceitou_termos" required />
             <span>Declaro que as informações são verdadeiras e autorizo seu uso exclusivamente para organizar a ida do Grupo Jovem Geração Eucarística ao DNJ 2026, evento do Setor Juventude — Arquidiocese de Niterói.</span>
           </label>
@@ -362,54 +373,21 @@
   </section>
 
   <!-- ===================== CONFIRMATION ===================== -->
-  <section id="confirm" class="confirm" hidden>
+  <section id="confirm" class="confirm confirm-compact" hidden>
     <div class="confirm-inner">
-      <div class="brand-logos">
-        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="72" height="72" />
-        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="80" height="108" />
+      <div class="brand-logos confirm-logos">
+        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="56" height="56" />
+        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="64" height="86" />
       </div>
       <p class="confirm-kicker">Caravana Geração Eucarística ao DNJ</p>
-      <h1>INSCRIÇÃO CONFIRMADA!</h1>
+      <h1>Inscrição confirmada!</h1>
       <p class="confirm-lead" id="confirm-lead">Sua inscrição no DNJ 2026 está confirmada.</p>
-
-      <aside id="minor-alert" class="minor-alert" hidden>
-        <p class="minor-alert-kicker">Atenção · menor de 18 anos</p>
-        <p class="minor-alert-title">O responsável precisa assinar o termo</p>
-        <p>Sem o termo assinado, o menor <strong>não embarca</strong>. Baixe o PDF, peça a assinatura do pai, da mãe ou do responsável e <strong>envie para a Beatriz</strong> no WhatsApp <a href="https://wa.me/5522920050790" target="_blank" rel="noopener">22 92005-0790</a>.</p>
-      </aside>
-
-      <p class="verse confirm-verse">
-        <span class="verse-plain">“Vinho novo em odres</span>
-        <span class="verse-script">novos.”</span>
-      </p>
-      <p class="citation">Lc 5,37</p>
       <p class="confirm-bus" id="confirm-bus"></p>
+      <p class="confirm-meta-compact">18 out 2026 · Saída 7h · Orla do Marine — Maricá</p>
 
-      <div class="confirm-meta">
-        <p><span>Data</span><strong>18 de outubro de 2026</strong></p>
-        <p><span>Saída</span><strong>7h da manhã</strong></p>
-        <p><span>Local</span><strong>Orla do Marine — Maricá</strong></p>
-        <p><span>Organização</span><strong>Setor Juventude — Arquidiocese de Niterói</strong></p>
-        <p><span>Paróquia</span><strong>Santo Antônio — Bacaxá</strong></p>
-      </div>
-
-      <p class="code-label">Seu código de inscrição · toque para copiar</p>
+      <p class="code-label">Código · toque para copiar</p>
       <button type="button" class="code" id="confirm-code" title="Copiar código">DNJ26---------</button>
       <p class="copied" id="copied-msg" hidden>Código copiado.</p>
-
-      <aside id="minor-card" class="minor-card" hidden>
-        <p class="minor-kicker">Passo obrigatório</p>
-        <h2>Envie o termo para a Beatriz</h2>
-        <p>1. Baixe o termo em PDF.<br>2. O responsável assina (no papel ou no gov.br).<br>3. Mande a foto nítida ou o PDF no WhatsApp da Beatriz.</p>
-        <div class="minor-actions">
-          <button type="button" class="btn-cta" id="btn-print-termo">
-            <span class="btn-cta-fill"></span>
-            <span class="btn-cta-label">BAIXAR TERMO EM PDF</span>
-          </button>
-          <a class="btn-ghost" id="btn-send-termo" href="#" target="_blank" rel="noopener">ENVIAR PARA A BEATRIZ NO WHATSAPP</a>
-        </div>
-        <p class="minor-how">Na impressão, escolha <strong>Salvar como PDF</strong>. WhatsApp da Beatriz: <strong>22 92005-0790</strong>.</p>
-      </aside>
 
       <div class="confirm-actions">
         <button type="button" class="btn-cta" id="btn-view">
@@ -483,7 +461,7 @@
       <p class="ticket-code" id="lookup-code"></p>
       <p id="lookup-meta"></p>
       <button type="button" class="btn-cta" id="lookup-open-ticket"><span class="btn-cta-fill"></span><span class="btn-cta-label">VER INGRESSO COM QR CODE</span></button>
-      <p class="lookup-minor-note" id="lookup-minor-note" hidden>Menor de 18 anos: o responsável precisa assinar o termo e enviar para a Beatriz no WhatsApp 22 92005-0790.</p>
+      <p class="lookup-minor-note" id="lookup-minor-note" hidden>Menor de 18 anos: o termo com assinatura do responsável deve ser enviado para a Beatriz (22 92005-0790).</p>
       <button type="button" class="btn-ghost" id="lookup-termo" hidden>Baixar termo de autorização (PDF)</button>
     </div>
   </dialog>
@@ -519,8 +497,9 @@
         <p class="termo-sign-name" id="termo-sign-name"></p>
       </div>
       <aside class="termo-gov">
-        <p><strong>Devolver para Beatriz Moreira · WhatsApp 22 92005-0790</strong></p>
-        <p>Foto nítida do termo assinado ou PDF. Sem este envio, o menor não embarca.</p>
+        <p><strong>Assinatura pelo gov.br</strong></p>
+        <p>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a>, envie este PDF, assine e devolva para Beatriz · WhatsApp 22 92005-0790.</p>
+        <p>Sem o termo assinado, o menor não embarca.</p>
       </aside>
     </div>
     <p class="termo-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>

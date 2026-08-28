@@ -244,7 +244,9 @@ function Registrar-Inscricao($body) {
     if ($cfg.limite_maximo -and $confirmadas -ge [int]$cfg.limite_maximo) { $onibus = $null }
     $status = if ($onibus) { "confirmada" } else { "lista_espera" }
     if ($status -eq "lista_espera" -and -not $cfg.lista_espera_ativa) { throw "Onibus lotados." }
-    $codigo = New-Codigo
+    $codigo = [string]$body.codigo_inscricao
+    if ($codigo -notmatch '^DNJ26-[A-F0-9]{8}$') { $codigo = New-Codigo }
+    while (@(Arr $db.inscricoes | Where-Object { $_.codigo_inscricao -eq $codigo }).Count -gt 0) { $codigo = New-Codigo }
     $id = New-Id
     $assento = $null
     if ($onibus) {
@@ -269,7 +271,7 @@ function Registrar-Inscricao($body) {
       como_conheceu=$(if($body.como_conheceu){[string]$body.como_conheceu}else{$null})
       necessidade_especifica=$(if($body.necessidade_especifica){[string]$body.necessidade_especifica}else{$null})
       observacoes=$obs
-      aceitou_termos=$true; status=$status; presente=$false
+      aceitou_termos=$true; termo_enviado=$false; status=$status; presente=$false
       onibus_id=$(if($onibus){$onibus.id}else{$null}); onibus_nome=$onibusNome
       faixa_etaria_id=$(if($faixa){$faixa.id}else{$null})
       faixa_nome=$(if($faixa){$faixa.nome}else{$null})
@@ -432,6 +434,7 @@ function Update-Inscricao($id, $body) {
     foreach ($k in @("nome_completo","sexo","cpf","whatsapp","email","paroquia","comunidade","grupo_movimento","cidade","bairro","observacoes","status")) {
       if ($null -ne $body.$k) { $i.$k = $body.$k }
     }
+    if ($null -ne $body.termo_enviado) { $i.termo_enviado = [bool]$body.termo_enviado }
     if ($body.status -eq "cancelada") {
       foreach ($a in Arr $db.assentos) { if ($a.inscricao_id -eq $i.id) { $a.inscricao_id = $null } }
       $i.onibus_id = $null; $i.assento = $null

@@ -185,7 +185,6 @@
   document.getElementById("btn-share").addEventListener("click", shareWhatsapp);
   document.getElementById("btn-print").addEventListener("click", printTicket);
   document.getElementById("btn-print-ticket").addEventListener("click", () => window.print());
-  document.getElementById("btn-print-termo").addEventListener("click", () => window.DNJTermo.print());
   document.getElementById("lookup-termo").addEventListener("click", () => window.DNJTermo.print());
 
   document.getElementById("lookup-form").addEventListener("submit", async (event) => {

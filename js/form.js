@@ -15,6 +15,16 @@
     "Confirme e entre no caminho",
   ];
   let step = 1;
+  let pendingCodigo = null;
+
+  function ensureCodigo() {
+    if (!pendingCodigo) pendingCodigo = window.DNJTermo?.generateCodigo?.() || `DNJ26-${Date.now().toString(16).slice(-8).toUpperCase()}`;
+    return pendingCodigo;
+  }
+
+  function resetCodigo() {
+    pendingCodigo = null;
+  }
 
   function calcAge(value) {
     if (!value) return null;
@@ -61,7 +71,7 @@
     if (!window.DNJTermo?.fillPreview) return;
     const age = calcAge(form.data_nascimento.value);
     if (age == null || age >= 18) return;
-    window.DNJTermo.fillPreview(window.DNJForm.payload());
+    window.DNJTermo.fillPreview({ ...window.DNJForm.payload(), codigo_inscricao: ensureCodigo() });
   }
 
   form.data_nascimento.addEventListener("input", () => {
@@ -95,6 +105,13 @@
       return !String(field.value || "").trim();
     });
   }
+  function markInvalid(fields) {
+    form.querySelectorAll(".field.is-invalid, .terms.is-invalid").forEach((el) => el.classList.remove("is-invalid"));
+    fields.forEach((field) => {
+      const box = field.closest(".field, .terms");
+      if (box) box.classList.add("is-invalid");
+    });
+  }
   function validEmail(value) {
     if (!value) return true;
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -117,8 +134,10 @@
     toggleMinor(calcAge(form.data_nascimento.value));
     toggleYouthWaitlist(calcAge(form.data_nascimento.value));
     if (step === 4) {
+      ensureCodigo();
       const p = window.DNJForm.payload();
       const review = document.getElementById("review-box");
+      const esc = (v) => String(v ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
       review.innerHTML = [
         ["Nome", p.nome_completo],
         ["Nascimento", p.data_nascimento.split("-").reverse().join("/")],
@@ -127,7 +146,7 @@
         ["Comunidade", p.comunidade || "—"],
         ["Cidade", [p.cidade, p.bairro].filter(Boolean).join(" · ") || "—"],
         p.nome_responsavel ? ["Responsável", `${p.nome_responsavel} · ${p.parentesco_responsavel || ""}`] : null,
-      ].filter(Boolean).map(([k, v]) => `<p><strong>${k}</strong> ${String(v).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))}</p>`).join("");
+      ].filter(Boolean).map(([k, v]) => `<p><strong>${esc(k)}</strong> ${esc(v)}</p>`).join("");
       updateTermPreview();
     }
     if (opts.focus) {
@@ -139,10 +158,12 @@
   btnNext.addEventListener("click", () => {
     const missing = requiredFields(panels[step - 1]);
     if (missing.length) {
+      markInvalid(missing);
       showError("Preencha os campos obrigatórios desta etapa para seguir.");
       missing[0].focus();
       return;
     }
+    markInvalid([]);
     if (step === 1) {
       const age = calcAge(form.data_nascimento.value);
       if (age == null || age < 13) {
@@ -201,7 +222,9 @@
   }
 
   window.DNJForm = {
-    reset() { form.reset(); idadeEl.value = "—"; btnSubmit.disabled = false; step = 1; paint(); },
+    reset() { form.reset(); idadeEl.value = "—"; btnSubmit.disabled = false; step = 1; resetCodigo(); paint(); },
+    ensureCodigo,
+    resetCodigo,
     validateMinor,
     isMinorNow,
     calcAge,
@@ -229,6 +252,7 @@
         whatsapp_responsavel: form.whatsapp_responsavel.value.trim() || null,
       };
       data.observacoes = window.DNJTermo?.noteFromForm(data) || null;
+      data.codigo_inscricao = ensureCodigo();
       return data;
     },
     showError,

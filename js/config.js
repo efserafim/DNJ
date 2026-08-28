@@ -20,6 +20,7 @@ window.DNJ_CONFIG = {
     role: "Responsável pela caravana",
   },
   termoWhatsapp: "5522920050790",
+  govSignUrl: "https://assinador.iti.br/",
   waitlistFromAge: 35,
   youthPreferenceNote: "Esta caravana do Setor Juventude prioriza jovens de 13 a 34 anos. Quem tem 35 anos ou mais entra na lista de espera.",
   share: {

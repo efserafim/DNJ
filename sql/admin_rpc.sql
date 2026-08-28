@@ -295,6 +295,7 @@ begin
     nome_completo = coalesce(p->>'nome_completo', nome_completo),
     status = coalesce(p->>'status', status),
     observacoes = coalesce(p->>'observacoes', observacoes),
+    termo_enviado = coalesce((p->>'termo_enviado')::boolean, termo_enviado),
     atualizado_em = now()
   where id = p_id;
   if (p->>'status') = 'cancelada' then

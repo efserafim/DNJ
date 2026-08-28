@@ -429,6 +429,33 @@ tbody tr.is-present td:first-child {
 .badge-ok { background: rgba(74, 107, 58, 0.16); color: #3d5a32; }
 .badge-wait { background: rgba(232, 184, 74, 0.28); color: #6b4a12; }
 .badge-off { background: rgba(107, 28, 40, 0.12); color: var(--wine); }
+.badge-minor {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(107, 28, 40, 0.14);
+  color: var(--wine);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.table-people tr.is-minor td:first-child + td strong {
+  color: var(--wine);
+}
+
+.table-people tr.is-minor-pending {
+  background: rgba(232, 184, 74, 0.08);
+}
+
+.termo-pill.is-warn {
+  background: rgba(232, 184, 74, 0.22);
+  color: #6b4a12;
+  border-color: rgba(232, 184, 74, 0.45);
+}
 
 .cell-actions {
   min-width: 248px;
@@ -907,6 +934,72 @@ tbody tr.is-present td:first-child {
   margin: 10px 0 18px;
   line-height: 1.45;
   color: var(--ink);
+}
+
+.inscricao-dialog {
+  width: min(520px, calc(100vw - 28px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+
+.admin-dialog-close {
+  float: right;
+  border: 0;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.inscricao-dialog h2 {
+  margin: 0 0 4px;
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 0.04em;
+  font-size: 1.8rem;
+  color: var(--wine);
+  padding-right: 2rem;
+}
+
+.inscricao-code {
+  margin: 0 0 14px;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  color: var(--orange);
+}
+
+.inscricao-detail {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(196, 92, 38, 0.06);
+  border: 1px solid rgba(196, 92, 38, 0.12);
+}
+
+.inscricao-detail p {
+  display: grid;
+  grid-template-columns: minmax(7rem, 38%) 1fr;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.inscricao-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.inscricao-detail strong {
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.inscricao-dialog .btn-ghost {
+  width: 100%;
 }
 
 .btn-cta.is-danger {

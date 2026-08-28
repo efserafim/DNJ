@@ -4,7 +4,15 @@
     name: "Ana Beatriz Moreira dos Santos",
     cpf: "119.876.987-46",
   };
-  const wa = cfg.termoWhatsapp || "5522920050790";
+  const govUrl = cfg.govSignUrl || "https://assinador.iti.br/";
+
+  function generateCodigo() {
+    const raw = (globalThis.crypto?.randomUUID?.() || `${Date.now()}${Math.random()}`)
+      .replace(/-/g, "")
+      .slice(0, 8)
+      .toUpperCase();
+    return `DNJ26-${raw}`;
+  }
 
   function setText(id, value, fallback) {
     const text = value || fallback || "—";
@@ -27,10 +35,11 @@
 
   function recordFromForm(data) {
     const age = ageFromBirth(data?.data_nascimento);
+    const codigo = data?.codigo_inscricao || window.DNJForm?.ensureCodigo?.() || generateCodigo();
     return {
       ...data,
       idade: age,
-      codigo_inscricao: data?.codigo_inscricao || "Gerado após confirmar",
+      codigo_inscricao: codigo,
     };
   }
 
@@ -79,26 +88,13 @@
     setText("termo-menor-nasc", [nasc, age].filter(Boolean).join(" · "));
     setText("termo-menor-cpf", record?.cpf, "não informado");
     setText("termo-menor-whatsapp", record?.whatsapp);
-    setText("termo-codigo", record?.codigo_inscricao, "Gerado após confirmar");
+    setText("termo-codigo", record?.codigo_inscricao, "—");
     setText("termo-coord-nome", coord.name);
     setText("termo-coord-cpf", coord.cpf);
     setText("termo-sign-name", g.nome, "");
-    const card = document.getElementById("minor-card");
-    const alertBox = document.getElementById("minor-alert");
-    const send = document.getElementById("btn-send-termo");
-    const minor = isMinor(record);
-    if (card) card.hidden = !minor;
-    if (alertBox) alertBox.hidden = !minor;
-    if (send) {
-      const msg = [
-        "Olá, Beatriz! Segue a autorização do menor de 18 anos da Caravana Geração Eucarística ao DNJ.",
-        record?.nome_completo ? `Participante: ${record.nome_completo}` : "",
-        record?.codigo_inscricao ? `Código: ${record.codigo_inscricao}` : "",
-        g.nome ? `Responsável: ${g.nome}` : "",
-        "Vou enviar a foto (ou o PDF assinado) do termo.",
-      ].filter(Boolean).join("\n");
-      send.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }
+    document.querySelectorAll(".termo-gov-link").forEach((link) => {
+      link.href = govUrl;
+    });
   }
 
   function print() {
@@ -136,5 +132,15 @@
     print();
   }
 
-  window.DNJTermo = { isMinor, fill, fillPreview, printDraft, print, parseGuardian, noteFromForm, ageFromBirth };
+  window.DNJTermo = {
+    isMinor,
+    fill,
+    fillPreview,
+    printDraft,
+    print,
+    parseGuardian,
+    noteFromForm,
+    ageFromBirth,
+    generateCodigo,
+  };
 })();

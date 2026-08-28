@@ -989,6 +989,36 @@ body {
   color: var(--ink-soft);
 }
 
+.step-required-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.req-mark {
+  color: var(--wine);
+  font-weight: 700;
+}
+
+.field-req > span:first-child::after {
+  content: " *";
+  color: var(--wine);
+  font-weight: 700;
+}
+
+.field-opt > span::after {
+  content: " (opcional)";
+  font-weight: 500;
+  font-size: 0.92em;
+  opacity: 0.72;
+}
+
+.terms-req > span::before {
+  content: "* ";
+  color: var(--wine);
+  font-weight: 700;
+}
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1034,6 +1064,18 @@ body {
   border-bottom-color: var(--orange);
   background: #fff;
   box-shadow: 0 8px 28px rgba(196, 92, 38, 0.12), 0 0 0 3px rgba(232, 184, 74, 0.22);
+}
+
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid textarea {
+  border-color: rgba(107, 28, 40, 0.35);
+  border-bottom-color: var(--wine);
+  background: rgba(107, 28, 40, 0.04);
+}
+
+.terms.is-invalid {
+  color: var(--wine);
 }
 
 .grid-2 {
@@ -1290,6 +1332,123 @@ body {
   font-size: clamp(2.6rem, 9vw, 4.4rem);
   letter-spacing: 0.04em;
   color: var(--orange);
+}
+
+.confirm-compact {
+  padding: clamp(14px, 3vw, 28px) clamp(12px, 2.5vw, 18px);
+}
+
+.confirm-compact .confirm-inner {
+  width: min(440px, 100%);
+  padding: clamp(18px, 3.5vw, 28px) clamp(14px, 2.5vw, 22px);
+}
+
+.confirm-compact .confirm-logos img.logo-ge {
+  width: 56px;
+  height: 56px;
+}
+
+.confirm-compact .confirm-logos img.logo-pascom {
+  width: 64px;
+  height: 86px;
+}
+
+.confirm-compact h1 {
+  font-size: clamp(2rem, 7vw, 3rem);
+  margin: 2px 0 6px;
+}
+
+.confirm-compact .confirm-lead {
+  font-size: 0.98rem;
+  margin: 0 0 8px;
+}
+
+.confirm-compact .confirm-bus {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--wine);
+}
+
+.confirm-meta-compact {
+  margin: 0 0 16px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+.confirm-compact .code-label {
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+}
+
+.confirm-compact .code {
+  margin-bottom: 8px;
+}
+
+.confirm-compact .confirm-actions {
+  margin-top: 14px;
+  gap: 8px;
+}
+
+.confirm-compact .confirm-actions .btn-cta {
+  min-height: 48px;
+}
+
+.gov-sign-help {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(107, 28, 40, 0.06);
+  border: 1px solid rgba(107, 28, 40, 0.14);
+}
+
+.gov-sign-help h4 {
+  margin: 0 0 8px;
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 1.05rem;
+  color: var(--wine);
+}
+
+.gov-sign-help ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.gov-sign-help li + li {
+  margin-top: 6px;
+}
+
+.gov-sign-help a {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.termo-gov {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(107, 28, 40, 0.06);
+  border: 1px solid rgba(107, 28, 40, 0.12);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.termo-gov p {
+  margin: 0 0 6px;
+}
+
+.termo-gov p:last-child {
+  margin: 0;
+}
+
+.termo-gov a {
+  color: var(--orange);
+  font-weight: 600;
 }
 
 .confirm-lead {

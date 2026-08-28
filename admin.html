@@ -125,6 +125,7 @@
             <select id="f-presente"><option value="">Presença</option><option value="1">Presentes</option><option value="0">Ausentes</option></select>
             <select id="f-onibus"><option value="">Ônibus</option></select>
             <select id="f-faixa"><option value="">Faixa etária</option></select>
+            <select id="f-menor"><option value="">Menores</option><option value="1">Só menores de 18</option><option value="termo">Termo pendente</option></select>
             <button class="btn-ghost btn-clear" id="btn-clear" type="button">Limpar filtros</button>
           </div>
           <div class="export-row">
@@ -141,6 +142,7 @@
                 <th>Nº</th>
                 <th class="th-sort" data-sort="nome">Nome</th>
                 <th class="th-sort" data-sort="idade">Idade</th>
+                <th>Termo</th>
                 <th class="th-sort" data-sort="faixa">Faixa</th>
                 <th class="th-sort" data-sort="onibus">Ônibus</th>
                 <th>WhatsApp</th>
@@ -221,6 +223,14 @@
       </form>
     </div>
   </section>
+
+  <dialog id="view-inscricao" class="admin-dialog inscricao-dialog">
+    <button type="button" class="admin-dialog-close" id="btn-close-inscricao" aria-label="Fechar">×</button>
+    <h2 id="inscricao-title">Inscrição</h2>
+    <p class="inscricao-code" id="inscricao-code">DNJ26-</p>
+    <div class="inscricao-detail" id="inscricao-body"></div>
+    <button type="button" class="btn-ghost" id="btn-close-inscricao-bottom">Fechar</button>
+  </dialog>
 
   <dialog id="transfer" class="admin-dialog">
     <p class="admin-kicker">Transferir passageiro</p>

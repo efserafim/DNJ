@@ -87,6 +87,7 @@ create table if not exists public.inscricoes (
   necessidade_especifica text,
   observacoes text,
   aceitou_termos boolean not null default false,
+  termo_enviado boolean not null default false,
   status text not null default 'confirmada',
   presente boolean not null default false,
   qr_code text unique not null,
@@ -174,9 +175,28 @@ create or replace function public.gerar_codigo_inscricao()
 returns trigger
 language plpgsql
 as $$
+declare
+  v_try int := 0;
 begin
-  if new.codigo_inscricao is null or new.codigo_inscricao = '' then
-    new.codigo_inscricao := 'DNJ26-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8));
+  if new.codigo_inscricao is not null
+     and new.codigo_inscricao <> ''
+     and new.codigo_inscricao ~ '^DNJ26-[A-F0-9]{8}$'
+     and not exists (
+       select 1 from public.inscricoes
+       where codigo_inscricao = new.codigo_inscricao
+     ) then
+    null;
+  else
+    loop
+      new.codigo_inscricao := 'DNJ26-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8));
+      exit when not exists (
+        select 1 from public.inscricoes where codigo_inscricao = new.codigo_inscricao
+      );
+      v_try := v_try + 1;
+      if v_try > 20 then
+        raise exception 'codigo indisponivel';
+      end if;
+    end loop;
   end if;
   new.qr_code := coalesce(nullif(new.qr_code, ''), new.codigo_inscricao);
   new.idade := public.calcular_idade(new.data_nascimento);
@@ -372,12 +392,14 @@ begin
   end if;
 
   insert into public.inscricoes (
+    codigo_inscricao,
     nome_completo, data_nascimento, idade, sexo, cpf, whatsapp, email,
     paroquia, comunidade, grupo_movimento, cidade, bairro,
     membro_geracao_eucaristica, ja_participou_dnj, como_conheceu,
     necessidade_especifica, observacoes, aceitou_termos,
     status, faixa_etaria_id, onibus_id
   ) values (
+    nullif(trim(p->>'codigo_inscricao'), ''),
     p->>'nome_completo',
     (p->>'data_nascimento')::date,
     v_idade,
