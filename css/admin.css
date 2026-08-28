@@ -744,6 +744,30 @@ tbody tr.is-present td:first-child {
   padding-top: 18px;
 }
 
+.cfg-bus {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 14px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(107, 28, 40, 0.1);
+}
+.cfg-bus:last-child {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.cfg-bus .switch {
+  padding-top: 4px;
+}
+
+.bus-card.is-off {
+  filter: grayscale(0.45);
+  opacity: 0.88;
+}
+.bus-card.is-off .chip {
+  background: rgba(44, 26, 18, 0.55);
+}
+
 .admin-dialog {
   width: min(420px, calc(100vw - 28px));
   border: 0;

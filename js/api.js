@@ -55,7 +55,9 @@
   function assemble(inscricoes, onibus, faixas, config, espera) {
     const people = (inscricoes || []).map((i) => mapPerson(i, onibus, faixas));
     const confirmadas = people.filter((i) => i.status === "confirmada");
-    const caps = (onibus || []).reduce((sum, o) => sum + Math.max((o.capacidade || 0) - (o.capacidade_reservada || 0), 0), 0);
+    const activeBuses = (onibus || []).filter((o) => o.ativo !== false);
+    const caps = activeBuses.reduce((sum, o) => sum + Math.max((o.capacidade || 0) - (o.capacidade_reservada || 0), 0), 0);
+    const onActive = confirmadas.filter((i) => activeBuses.some((o) => o.id === i.onibus_id)).length;
     const hour = new Date().getHours();
     const saudacao = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
     const onibusView = (onibus || []).sort((a, b) => a.ordem - b.ordem).map((o) => {
@@ -104,7 +106,7 @@
         confirmadas: confirmadas.length,
         presentes: people.filter((i) => i.presente).length,
         espera: (espera || []).length,
-        vagas: Math.max(caps - confirmadas.length, 0),
+        vagas: Math.max(caps - onActive, 0),
         capacidade: caps,
         hoje: people.filter((i) => String(i.criado_em).startsWith(hoje)).length,
       },
@@ -118,6 +120,7 @@
     if (/lotados/i.test(raw)) return "Os ônibus estão lotados e a lista de espera não está ativa.";
     if (/Termos/i.test(raw)) return "É necessário autorizar o uso das informações para confirmar.";
     if (/lotado/i.test(raw)) return "Esse ônibus está lotado.";
+    if (/desativado/i.test(raw)) return "Esse ônibus está desativado. Reative em Ajustes para usá-lo de novo.";
     if (/not_found/i.test(raw)) return "Inscrição não encontrada.";
     if (/Senha fraca/i.test(raw)) return raw;
     if (/gen_salt|pgcrypto/i.test(raw)) return "Não foi possível gravar a senha no banco. Rode sql/senhas_individuais.sql no Supabase e tente de novo.";

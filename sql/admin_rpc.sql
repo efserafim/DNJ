@@ -29,7 +29,9 @@ begin
     limit 1;
     if v_id is not null then return v_id; end if;
     select onibus_preferido_id into v_pref from public.faixas_etarias where id = p_faixa;
-    if v_pref is not null and public.ocupacao_onibus(v_pref) < public.capacidade_util(v_pref) then
+    if v_pref is not null
+      and exists (select 1 from public.onibus o where o.id = v_pref and o.ativo)
+      and public.ocupacao_onibus(v_pref) < public.capacidade_util(v_pref) then
       return v_pref;
     end if;
   end if;
@@ -253,6 +255,11 @@ begin
   perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes where id = p_inscricao;
   if v.id is null then raise exception 'not_found'; end if;
+  if v.onibus_id is distinct from p_onibus and not exists (
+    select 1 from public.onibus o where o.id = p_onibus and o.ativo
+  ) then
+    raise exception 'Onibus desativado';
+  end if;
   cap := public.capacidade_util(p_onibus);
   occ := public.ocupacao_onibus(p_onibus);
   if v.onibus_id is distinct from p_onibus and occ >= cap then

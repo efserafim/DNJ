@@ -259,7 +259,9 @@ begin
     limit 1;
     if v_id is not null then return v_id; end if;
     select onibus_preferido_id into v_pref from public.faixas_etarias where id = p_faixa;
-    if v_pref is not null and public.ocupacao_onibus(v_pref) < public.capacidade_util(v_pref) then
+    if v_pref is not null
+      and exists (select 1 from public.onibus o where o.id = v_pref and o.ativo)
+      and public.ocupacao_onibus(v_pref) < public.capacidade_util(v_pref) then
       return v_pref;
     end if;
   end if;

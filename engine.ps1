@@ -385,6 +385,7 @@ function Transferir($id, $onibusId, $usuario) {
     if (-not $i) { throw "Inscricao nao encontrada." }
     $dest = Arr $db.onibus | Where-Object { $_.id -eq $onibusId } | Select-Object -First 1
     if (-not $dest) { throw "Onibus nao encontrado." }
+    if ($dest.ativo -eq $false -and $i.onibus_id -ne $dest.id) { throw "Onibus desativado." }
     if ((Get-Ocupacao $db $dest.id) -ge (Get-Capacidade $dest) -and $i.onibus_id -ne $dest.id) { throw "Onibus lotado." }
     $antes = $i.onibus_id
     foreach ($a in Arr $db.assentos) { if ($a.inscricao_id -eq $i.id) { $a.inscricao_id = $null } }
@@ -459,7 +460,16 @@ function Save-Config($body, $email) {
       $cfg | Add-Member -NotePropertyName $k -NotePropertyValue $body.$k -Force
     }
     if ($body.faixas) { $db.faixas_etarias = Arr $body.faixas; Recalcular-Faixas $db }
-    if ($body.onibus) { $db.onibus = Arr $body.onibus }
+    if ($body.onibus) {
+      foreach ($r in Arr $body.onibus) {
+        $o = Arr $db.onibus | Where-Object { $_.id -eq $r.id } | Select-Object -First 1
+        if (-not $o) { continue }
+        if ($r.nome) { $o.nome = [string]$r.nome }
+        if ($null -ne $r.capacidade -and [string]$r.capacidade -ne "") { $o.capacidade = [int]$r.capacidade }
+        if ($r.PSObject.Properties.Name -contains "faixa_etaria_id") { $o | Add-Member -NotePropertyName faixa_etaria_id -NotePropertyValue $r.faixa_etaria_id -Force }
+        if ($null -ne $r.ativo) { $o | Add-Member -NotePropertyName ativo -NotePropertyValue ([bool]$r.ativo) -Force }
+      }
+    }
     if ($body.nova_senha) {
       $nova = [string]$body.nova_senha
       if ($nova.Length -lt 10) { throw "Senha fraca: use pelo menos 10 caracteres." }
@@ -481,6 +491,7 @@ function Promover-Espera($onibusId) {
     $i = Arr $db.inscricoes | Where-Object { $_.id -eq $e.inscricao_id } | Select-Object -First 1
     $dest = if ($onibusId) { Arr $db.onibus | Where-Object { $_.id -eq $onibusId } | Select-Object -First 1 } else { Escolher-Onibus $db (Get-Faixa $db ([int]$i.idade)) }
     if (-not $dest) { throw "Sem vaga." }
+    if ($dest.ativo -eq $false) { throw "Onibus desativado." }
     $i.onibus_id = $dest.id; $i.onibus_nome = $dest.nome; $i.status = "confirmada"
     $i.assento = Proximo-Assento $db $dest.id; $i.atualizado_em = Now-Iso
     $e.status = "promovida"

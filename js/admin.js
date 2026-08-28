@@ -117,7 +117,7 @@
   }
   function busOptions(exceptId, selectedId) {
     return (data.onibus || [])
-      .filter((o) => o.id !== exceptId)
+      .filter((o) => o.id !== exceptId && o.ativo !== false)
       .map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${esc(o.nome)}${o.livres <= 0 ? " (lotado)" : ""}</option>`)
       .join("");
   }
@@ -138,6 +138,10 @@
     const dest = data.onibus.find((o) => o.id === destId);
     if (!person || !dest) return;
     if (person.onibus_id === destId) return;
+    if (dest.ativo === false) {
+      toast(`${dest.nome} está desativado. Reative em Ajustes para mover alguém para ele.`, "warn");
+      return;
+    }
     if (dest.livres <= 0 && person.onibus_id !== destId) {
       toast(`${dest.nome} está lotado.`, "warn");
       return;
@@ -153,14 +157,15 @@
   function busCard(o) {
     const dots = Array.from({ length: Math.min(o.capacidade, 40) }, (_, n) => `<i class="${n < o.ocupados ? "on" : ""}"></i>`).join("");
     const faixa = faixaDoOnibus(o);
-    return `<article class="bus-card" data-bus="${o.id}" style="background:linear-gradient(160deg, ${o.cor}, #3d1018)">
+    const off = o.ativo === false;
+    return `<article class="bus-card${off ? " is-off" : ""}" data-bus="${o.id}" style="background:linear-gradient(160deg, ${o.cor}, #3d1018)">
       <h3>ÔNIBUS ${String(o.numero).padStart(2, "0")}</h3>
       <p class="muted">${esc(o.nome)}</p>
       <p class="muted">${faixa ? esc(faixa.nome) : "Faixa não definida"}</p>
       <div class="bus-seats">${dots}</div>
-      <p><b>${o.ocupados} / ${o.capacidade}</b> · ${o.livres} livres</p>
+      <p><b>${o.ocupados} / ${o.capacidade}</b> · ${off ? "desativado" : `${o.livres} livres`}</p>
       <div class="bar"><span style="width:${o.percentual}%"></span></div>
-      <span class="chip">${o.percentual}% ocupado</span>
+      <span class="chip">${off ? "Desativado" : `${o.percentual}% ocupado`}</span>
       <span class="bus-wheel a"></span><span class="bus-wheel b"></span>
     </article>`;
   }
@@ -202,6 +207,11 @@
         const person = data.inscricoes.find((i) => i.id === id);
         if (!person) return;
         const dest = data.onibus.find((o) => o.id === el.dataset.bus);
+        if (!dest) return;
+        if (dest.ativo === false) {
+          toast(`${dest.nome} está desativado. Reative em Ajustes para transferir para ele.`, "warn");
+          return;
+        }
         pendingTransfer = { id, dest };
         qs("transfer-text").textContent = `Deseja transferir ${person.nome_completo} para o ${dest.nome}?`;
         qs("transfer").showModal();
@@ -209,7 +219,7 @@
     });
   }
   function renderMatrix() {
-    const heads = (data.onibus || []).map((o) => `<th>${esc(o.nome)}</th>`).join("");
+    const heads = (data.onibus || []).map((o) => `<th>${esc(o.nome)}${o.ativo === false ? " (desativado)" : ""}</th>`).join("");
     const rows = (data.matriz || []).map((m) => `<tr><th>${esc(m.faixa)}</th>${m.valores.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("");
     qs("matrix").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Faixa</th>${heads}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
@@ -240,7 +250,7 @@
     const fxSign = data.faixas.map((f) => `${f.id}:${f.nome}`).join("|");
     if (ob.dataset.sign !== busSign) {
       const keep = ob.value;
-      ob.innerHTML = `<option value="">Ônibus</option>` + data.onibus.map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`).join("");
+      ob.innerHTML = `<option value="">Ônibus</option>` + data.onibus.map((o) => `<option value="${o.id}">${esc(o.nome)}${o.ativo === false ? " (desativado)" : ""}</option>`).join("");
       ob.value = keep;
       ob.dataset.sign = busSign;
     }
@@ -315,15 +325,18 @@
     form.limite_maximo.value = c.limite_maximo ?? "";
     form.inscricoes_abertas.checked = c.inscricoes_abertas !== false;
     form.lista_espera_ativa.checked = c.lista_espera_ativa !== false;
-    qs("cfg-buses").innerHTML = data.onibus.map((o, i) => `<div class="cfg-grid">
-      <label class="field"><span>Nome ônibus ${o.numero}</span><input name="bus_nome_${i}" value="${esc(o.nome)}" data-id="${o.id}" /></label>
-      <label class="field"><span>Capacidade</span><input type="number" min="1" name="bus_cap_${i}" value="${o.capacidade}" data-id="${o.id}" /></label>
-      <label class="field"><span>Faixa etária deste ônibus</span>
-        <select name="bus_faixa_${i}">
-          <option value="">Sem faixa definida</option>
-          ${data.faixas.map((fx) => `<option value="${fx.id}" ${fx.id === o.faixa_etaria_id ? "selected" : ""}>${esc(fx.nome)}</option>`).join("")}
-        </select>
-      </label>
+    qs("cfg-buses").innerHTML = data.onibus.map((o, i) => `<div class="cfg-bus">
+      <div class="cfg-grid">
+        <label class="field"><span>Nome ônibus ${o.numero}</span><input name="bus_nome_${i}" value="${esc(o.nome)}" data-id="${o.id}" /></label>
+        <label class="field"><span>Capacidade</span><input type="number" min="1" name="bus_cap_${i}" value="${o.capacidade}" data-id="${o.id}" /></label>
+        <label class="field"><span>Faixa etária deste ônibus</span>
+          <select name="bus_faixa_${i}">
+            <option value="">Sem faixa definida</option>
+            ${data.faixas.map((fx) => `<option value="${fx.id}" ${fx.id === o.faixa_etaria_id ? "selected" : ""}>${esc(fx.nome)}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <label class="switch"><input type="checkbox" name="bus_ativo_${i}" ${o.ativo === false ? "" : "checked"} /> Ônibus ativo — aceita novas inscrições</label>
     </div>`).join("");
     qs("cfg-faixas").innerHTML = data.faixas.map((f, i) => `<div class="cfg-grid">
       <label class="field"><span>Nome da faixa</span><input name="fx_nome_${i}" value="${esc(f.nome)}" data-id="${f.id}" /></label>
@@ -344,8 +357,8 @@
       seats.push(`<button class="seat ${cls}" title="${title}" type="button">${p ? esc(p.nome_completo.split(" ")[0]) : n}</button>`);
     }
     qs("bus-interior").hidden = false;
-    qs("bus-interior").innerHTML = `<h2>${esc(o.nome)}</h2>
-      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · use Mover para trocar de ônibus</p>
+    qs("bus-interior").innerHTML = `<h2>${esc(o.nome)}${o.ativo === false ? " · desativado" : ""}</h2>
+      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · ${o.ativo === false ? "não recebe novas inscrições — reative em Ajustes" : "use Mover para trocar de ônibus"}</p>
       <div class="seat-map">${seats.join("")}</div>
       <div class="table-wrap" style="margin-top:16px"><table>
         <thead><tr><th>Assento</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>WhatsApp</th><th>Código</th><th>Presença</th><th>Mover</th></tr></thead>
@@ -562,6 +575,7 @@
           nome: f[`bus_nome_${i}`].value.trim(),
           capacidade: Number(f[`bus_cap_${i}`].value),
           faixa_etaria_id: f[`bus_faixa_${i}`].value || null,
+          ativo: f[`bus_ativo_${i}`].checked,
         })),
         faixas: data.faixas.map((fx, i) => ({
           id: fx.id,
