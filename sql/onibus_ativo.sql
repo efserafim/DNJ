@@ -64,6 +64,7 @@ set search_path = public
 as $$
 declare
   v public.inscricoes;
+  v_first uuid;
   cap int;
   occ int;
   seat int;
@@ -71,6 +72,16 @@ begin
   perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes where id = p_inscricao;
   if v.id is null then raise exception 'not_found'; end if;
+  if v.status = 'lista_espera' then
+    select e.inscricao_id into v_first
+    from public.lista_espera e
+    where e.status = 'aguardando'
+    order by e.criado_em asc, e.posicao asc
+    limit 1;
+    if v_first is distinct from v.id then
+      raise exception 'Proximo da fila';
+    end if;
+  end if;
   if v.onibus_id is distinct from p_onibus and not exists (
     select 1 from public.onibus o where o.id = p_onibus and o.ativo
   ) then

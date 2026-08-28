@@ -121,6 +121,7 @@
     if (/Termos/i.test(raw)) return "É necessário autorizar o uso das informações para confirmar.";
     if (/lotado/i.test(raw)) return "Esse ônibus está lotado.";
     if (/desativado/i.test(raw)) return "Esse ônibus está desativado. Reative em Ajustes para usá-lo de novo.";
+    if (/Proximo da fila/i.test(raw)) return "Esta pessoa não é a próxima da fila. Promova na ordem de chegada.";
     if (/not_found/i.test(raw)) return "Inscrição não encontrada.";
     if (/Senha fraca/i.test(raw)) return raw;
     if (/gen_salt|pgcrypto/i.test(raw)) return "Não foi possível gravar a senha no banco. Rode sql/senhas_individuais.sql no Supabase e tente de novo.";

@@ -248,6 +248,7 @@ set search_path = public
 as $$
 declare
   v public.inscricoes;
+  v_first uuid;
   cap int;
   occ int;
   seat int;
@@ -255,6 +256,16 @@ begin
   perform public.assert_admin_session(p_email, p_pin);
   select * into v from public.inscricoes where id = p_inscricao;
   if v.id is null then raise exception 'not_found'; end if;
+  if v.status = 'lista_espera' then
+    select e.inscricao_id into v_first
+    from public.lista_espera e
+    where e.status = 'aguardando'
+    order by e.criado_em asc, e.posicao asc
+    limit 1;
+    if v_first is distinct from v.id then
+      raise exception 'Proximo da fila';
+    end if;
+  end if;
   if v.onibus_id is distinct from p_onibus and not exists (
     select 1 from public.onibus o where o.id = p_onibus and o.ativo
   ) then
@@ -347,7 +358,7 @@ declare
   dest uuid;
 begin
   perform public.assert_admin_session(p_email, p_pin);
-  select * into e from public.lista_espera where status = 'aguardando' order by posicao limit 1;
+  select * into e from public.lista_espera where status = 'aguardando' order by criado_em asc, posicao asc limit 1;
   if e.id is null then return null; end if;
   select * into v from public.inscricoes where id = e.inscricao_id;
   dest := coalesce(p_onibus, public.escolher_onibus(v.faixa_etaria_id));
@@ -471,7 +482,7 @@ begin
     'config', cfg,
     'onibus', (select coalesce(jsonb_agg(to_jsonb(o) order by o.ordem), '[]'::jsonb) from public.onibus o),
     'faixas', (select coalesce(jsonb_agg(to_jsonb(f) order by f.prioridade), '[]'::jsonb) from public.faixas_etarias f),
-    'espera', (select coalesce(jsonb_agg(to_jsonb(e) order by e.posicao), '[]'::jsonb) from public.lista_espera e where e.status = 'aguardando'),
+    'espera', (select coalesce(jsonb_agg(to_jsonb(e) order by e.criado_em asc, e.posicao asc), '[]'::jsonb) from public.lista_espera e where e.status = 'aguardando'),
     'inscricoes', (
       select coalesce(jsonb_agg(x.j order by x.criado_em desc), '[]'::jsonb)
       from (

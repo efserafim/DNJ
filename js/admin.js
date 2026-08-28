@@ -197,32 +197,34 @@
       .map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${esc(o.nome)}${o.livres <= 0 ? " (lotado)" : ""}</option>`)
       .join("");
   }
+  function waitQueue() {
+    return [...(data?.espera || [])].sort((a, b) => {
+      const ta = String(a.criado_em || "");
+      const tb = String(b.criado_em || "");
+      if (ta !== tb) return ta.localeCompare(tb);
+      return (a.posicao || 0) - (b.posicao || 0);
+    });
+  }
+  function waitPosition(inscricaoId) {
+    const idx = waitQueue().findIndex((e) => e.inscricao_id === inscricaoId);
+    return idx >= 0 ? idx + 1 : 0;
+  }
+  function firstWaitId() {
+    return waitQueue()[0]?.inscricao_id || null;
+  }
   function moveBox(person) {
     if (person.status === "cancelada") return "";
+    if (person.status === "lista_espera") {
+      const pos = waitPosition(person.id);
+      if (person.id !== firstWaitId()) {
+        return `<span class="wait-pos" title="Aguardando vez na fila">${pos}º na fila</span>`;
+      }
+    }
     return `<select class="admin-select admin-select-move" aria-label="Mover ${esc(person.nome_completo)}" data-move-sel="${person.id}">
-        <option value="">→ ônibus</option>
+        <option value="">Mover para…</option>
         ${busOptions(person.onibus_id)}
-      </select>`;
-  }
-  function bindMoveSelects(root) {
-    (root || qs("rows")).querySelectorAll("[data-move-sel]").forEach((sel) => {
-      if (sel.dataset.bound) return;
-      sel.dataset.bound = "1";
-      sel.addEventListener("change", async () => {
-        const destId = sel.value;
-        if (!destId) return;
-        const id = sel.dataset.moveSel;
-        sel.disabled = true;
-        try {
-          await moverInscrito(id, destId);
-        } catch (err) {
-          toast(err?.message || "Não foi possível mover.", "err");
-        } finally {
-          sel.disabled = false;
-          sel.value = "";
-        }
-      });
-    });
+      </select>
+      <button class="btn-admin" data-move="${person.id}" type="button">Mover</button>`;
   }
   async function moverInscrito(id, destId) {
     if (!id || !destId) {
@@ -239,6 +241,10 @@
     }
     if (dest.livres <= 0 && person.onibus_id !== destId) {
       toast(`${dest.nome} está lotado.`, "warn");
+      return;
+    }
+    if (person.status === "lista_espera" && person.id !== firstWaitId()) {
+      toast(`Esta pessoa é ${waitPosition(person.id)}º na fila. Promova primeiro quem entrou antes.`, "warn");
       return;
     }
     const yes = await ask(`Mover ${person.nome_completo} para o ${dest.nome}?`, { title: "Trocar de ônibus", ok: "MOVER" });
@@ -398,10 +404,10 @@
       <td data-label="Presença"><button class="pill ${i.presente ? "is-on" : "is-off"}" data-check="${esc(i.codigo_inscricao)}" type="button">${i.presente ? "Presente" : "Check-in"}</button></td>
       <td class="cell-actions" data-label="Ações">
         <div class="row-actions">
-          <button class="btn-admin btn-compact" data-view-ins="${i.id}" type="button" title="Ver inscrição">Ver</button>
+          <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
           ${moveBox(i)}
-          ${i.status === "cancelada" ? "" : `<button class="btn-admin btn-compact" data-cancel="${i.id}" type="button" title="Cancelar inscrição">Canc.</button>`}
-          <button class="btn-admin btn-danger btn-compact" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button" title="Excluir inscrição">Excl.</button>
+          ${i.status === "cancelada" ? "" : `<button class="btn-admin" data-cancel="${i.id}" type="button">Cancelar</button>`}
+          <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
         </div>
       </td>
     </tr>`;
@@ -409,26 +415,28 @@
     qs("rows").querySelectorAll("tr[draggable]").forEach((tr) => {
       tr.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/inscricao", tr.dataset.id));
     });
-    bindMoveSelects(qs("rows"));
   }
   function renderWait() {
-    const ids = (data.espera || []).map((e) => e.inscricao_id);
-    const people = ids.map((id) => data.inscricoes.find((i) => i.id === id)).filter(Boolean);
-    qs("wait-alert").textContent = people.length ? `${people.length} pessoa(s) aguardando vaga.` : "Lista de espera vazia.";
-    qs("wait-rows").innerHTML = people.length
-      ? people.map((i, n) => `<tr>
+    const queue = waitQueue();
+    qs("wait-alert").textContent = queue.length
+      ? `${queue.length} pessoa(s) aguardando vaga — promova sempre do 1º em diante.`
+      : "Lista de espera vazia.";
+    qs("wait-rows").innerHTML = queue.length
+      ? queue.map((e, n) => {
+        const i = data.inscricoes.find((x) => x.id === e.inscricao_id);
+        if (!i) return "";
+        return `<tr class="${n === 0 ? "is-next-wait" : ""}">
           <td data-label="Posição">${n + 1}º</td>
           <td data-label="Nome"><strong>${esc(i.nome_completo)}</strong></td>
           <td data-label="Idade">${i.idade || "—"}</td>
           <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
-          <td data-label="Desde">${when(i.criado_em)}</td>
+          <td data-label="Desde">${when(e.criado_em || i.criado_em)}</td>
           <td data-label="Ações" class="cell-actions">
-            <div class="row-actions row-actions-inline">
-              <button class="btn-admin btn-compact" data-view-ins="${i.id}" type="button" title="Ver inscrição">Ver</button>
-              <button class="btn-admin btn-danger btn-compact" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button" title="Excluir inscrição">Excl.</button>
-            </div>
+            <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
+            <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
           </td>
-        </tr>`).join("")
+        </tr>`;
+      }).join("")
       : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
   }
   function syncBusToggle(box) {
@@ -512,7 +520,7 @@
     }
     qs("bus-interior").hidden = false;
     qs("bus-interior").innerHTML = `<h2>${esc(o.nome)}${o.ativo === false ? " · desativado" : ""}</h2>
-      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · ${o.ativo === false ? "não recebe novas inscrições — reative em Ajustes" : "escolha o ônibus no menu para mover"}</p>
+      <p>${o.ocupados}/${o.capacidade} passageiros · ${faixa ? esc(faixa.nome) : "sem faixa definida"} · ${o.ativo === false ? "não recebe novas inscrições — reative em Ajustes" : "use Mover para trocar de ônibus"}</p>
       <div class="seat-map">${seats.join("")}</div>
       <div class="table-wrap" style="margin-top:16px"><table>
         <thead><tr><th>Assento</th><th>Nome</th><th>Idade</th><th>Faixa</th><th>WhatsApp</th><th>Código</th><th>Presença</th><th>Mover</th></tr></thead>
@@ -527,7 +535,6 @@
           <td class="cell-actions"><div class="row-actions">${moveBox(p)}</div></td>
         </tr>`).join("") || `<tr><td colspan="8" class="empty">Nenhum ocupante neste ônibus.</td></tr>`}</tbody>
       </table></div>`;
-    bindMoveSelects(qs("bus-interior"));
   }
 
   function paint(opts = {}) {
@@ -571,6 +578,16 @@
   qs("bus-detail-cards").addEventListener("click", (e) => {
     const card = e.target.closest(".bus-card");
     if (card) openBus(card.dataset.bus);
+  });
+  qs("bus-interior").addEventListener("click", async (e) => {
+    const mover = e.target.closest("[data-move]");
+    if (!mover) return;
+    const sel = qs("bus-interior").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+    try {
+      await moverInscrito(mover.dataset.move, sel?.value);
+    } catch (err) {
+      toast(err?.message || "Não foi possível mover.", "err");
+    }
   });
   qs("search").addEventListener("input", () => renderPeople(true));
   ["f-status","f-presente","f-onibus","f-faixa","f-menor"].forEach((id) => qs(id).addEventListener("change", () => renderPeople(true)));
@@ -649,6 +666,11 @@
           await refresh();
           toast("Inscrição excluída.");
         }
+      }
+      const mover = e.target.closest("[data-move]");
+      if (mover) {
+        const sel = qs("rows").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+        await moverInscrito(mover.dataset.move, sel?.value);
       }
     } catch (err) {
       toast(err?.message || "Não foi possível concluir a ação.", "err");

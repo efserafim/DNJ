@@ -364,7 +364,7 @@ function Dashboard($q) {
     faixas = @(Arr $db.faixas_etarias)
     onibus = @($onibusView)
     matriz = @($matriz)
-    espera = @(Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" })
+    espera = @(Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" } | Sort-Object criado_em, posicao)
     logs = @(Arr $db.logs | Sort-Object criado_em -Descending | Select-Object -First 40)
     inscricoes = @($items | Sort-Object criado_em -Descending)
     graficos = [pscustomobject]@{
@@ -394,6 +394,10 @@ function Transferir($id, $onibusId, $usuario) {
     if (-not $dest) { throw "Onibus nao encontrado." }
     if ($dest.ativo -eq $false -and $i.onibus_id -ne $dest.id) { throw "Onibus desativado." }
     if ((Get-Ocupacao $db $dest.id) -ge (Get-Capacidade $dest) -and $i.onibus_id -ne $dest.id) { throw "Onibus lotado." }
+    if ($i.status -eq "lista_espera") {
+      $first = Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" } | Sort-Object criado_em, posicao | Select-Object -First 1
+      if ($first -and $first.inscricao_id -ne $i.id) { throw "Proximo da fila." }
+    }
     $antes = $i.onibus_id
     foreach ($a in Arr $db.assentos) { if ($a.inscricao_id -eq $i.id) { $a.inscricao_id = $null } }
     $i.onibus_id = $dest.id; $i.onibus_nome = $dest.nome
@@ -494,7 +498,7 @@ function Save-Config($body, $email) {
 function Promover-Espera($onibusId) {
   return With-Db {
     param($db)
-    $e = Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" } | Sort-Object posicao | Select-Object -First 1
+    $e = Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" } | Sort-Object criado_em, posicao | Select-Object -First 1
     if (-not $e) { return $null }
     $i = Arr $db.inscricoes | Where-Object { $_.id -eq $e.inscricao_id } | Select-Object -First 1
     $dest = if ($onibusId) { Arr $db.onibus | Where-Object { $_.id -eq $onibusId } | Select-Object -First 1 } else { Escolher-Onibus $db (Get-Faixa $db ([int]$i.idade)) }
