@@ -176,7 +176,10 @@
               <input type="text" id="idade_display" value="—" readonly tabindex="-1" />
             </label>
           </div>
-          <p class="youth-pref-note" id="youth-pref-note" hidden>Esta caravana do Setor Juventude prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, a inscrição entra na lista de espera.</p>
+          <p class="waitlist-note youth-pref-note" id="youth-pref-note" hidden>
+            <strong class="waitlist-note-title">Lista de espera por idade</strong>
+            <span>Esta caravana do Setor Juventude prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, sua inscrição entra direto na lista de espera — você será avisado se surgir vaga.</span>
+          </p>
 
           <label class="field field-req">
             <span>Sexo</span>
@@ -268,6 +271,11 @@
         <fieldset class="step-panel" data-step="4" hidden>
           <legend>Confirme sua caminhada</legend>
           <p class="step-intro">Confira seus dados e autorize o uso só para organizar a ida da nossa caravana ao DNJ 2026.</p>
+          <aside class="waitlist-step-alert" id="waitlist-step-alert" hidden>
+            <p class="waitlist-step-kicker">Atenção · lista de espera</p>
+            <p class="waitlist-step-title">Com sua idade, você entra na lista de espera</p>
+            <p>Esta caravana prioriza jovens de 13 a 34 anos. Sua inscrição será registrada, mas <strong>sem assento no ônibus por enquanto</strong>. A coordenação avisa se surgir vaga.</p>
+          </aside>
           <div class="review" id="review-box"></div>
           <div id="bloco-menor" class="minor-form" hidden>
             <p class="minor-form-alert">Menor de 18 anos: baixe o termo com o código abaixo, assine (papel ou gov.br) e envie para a Beatriz · 22 92005-0790.</p>
@@ -380,7 +388,14 @@
         <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="64" height="86" />
       </div>
       <p class="confirm-kicker">Caravana Geração Eucarística ao DNJ</p>
-      <h1>Inscrição confirmada!</h1>
+      <h1 id="confirm-title">Inscrição confirmada!</h1>
+
+      <aside class="waitlist-alert" id="waitlist-alert" hidden>
+        <p class="waitlist-alert-kicker" id="waitlist-alert-kicker">Lista de espera</p>
+        <p class="waitlist-alert-title" id="waitlist-alert-title">Sem assento no ônibus por enquanto</p>
+        <p id="waitlist-alert-text">Sua inscrição foi registrada. A coordenação entrará em contato se surgir vaga.</p>
+      </aside>
+
       <p class="confirm-lead" id="confirm-lead">Sua inscrição no DNJ 2026 está confirmada.</p>
       <p class="confirm-bus" id="confirm-bus"></p>
       <p class="confirm-meta-compact">18 out 2026 · Saída 7h · Orla do Marine — Maricá</p>
@@ -417,6 +432,7 @@
         <p class="ticket-verse">“Vinho novo em odres novos” · Lc 5,37</p>
       </header>
       <div class="ticket-body">
+        <p class="ticket-wait-banner" id="ticket-wait-banner" hidden>Lista de espera — sem assento garantido</p>
         <h2 id="ticket-name">Participante</h2>
         <p class="ticket-code" id="ticket-code">DNJ26-</p>
         <div class="ticket-qr-wrap">

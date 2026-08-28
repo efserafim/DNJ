@@ -61,10 +61,17 @@
     form.ciente_termo_menor.required = minor;
   }
 
+  function isWaitlistAge(age) {
+    const minAge = window.DNJ_CONFIG?.waitlistFromAge ?? 35;
+    return age != null && age >= minAge;
+  }
+
   function toggleYouthWaitlist(age) {
     const note = document.getElementById("youth-pref-note");
-    const minAge = window.DNJ_CONFIG?.waitlistFromAge ?? 35;
-    if (note) note.hidden = !(age != null && age >= minAge);
+    const stepAlert = document.getElementById("waitlist-step-alert");
+    const on = isWaitlistAge(age);
+    if (note) note.hidden = !on;
+    if (stepAlert) stepAlert.hidden = !(on && step === 4);
   }
 
   function updateTermPreview() {
@@ -135,9 +142,12 @@
     toggleYouthWaitlist(calcAge(form.data_nascimento.value));
     if (step === 4) {
       ensureCodigo();
+      const age = calcAge(form.data_nascimento.value);
+      toggleYouthWaitlist(age);
       const p = window.DNJForm.payload();
       const review = document.getElementById("review-box");
       const esc = (v) => String(v ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+      review.classList.toggle("is-waitlist", isWaitlistAge(age));
       review.innerHTML = [
         ["Nome", p.nome_completo],
         ["Nascimento", p.data_nascimento.split("-").reverse().join("/")],

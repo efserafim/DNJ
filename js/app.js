@@ -30,10 +30,13 @@
 
   function shareText(record) {
     const wait = record?.status === "lista_espera";
+    const waitByAge = wait && Number(record?.idade) >= (cfg.waitlistFromAge ?? 35);
     return [
-      "Estou inscrito no DNJ 2026!",
+      wait ? "Estou na lista de espera do DNJ 2026." : "Estou inscrito no DNJ 2026!",
       "“Vinho novo em odres novos.” Lc 5,37",
-      wait ? "Lista de espera" : [record?.onibus_nome, record?.assento ? `Assento ${record.assento}` : ""].filter(Boolean).join(" · "),
+      wait
+        ? (waitByAge ? "Lista de espera · prioridade jovens 13–34" : "Lista de espera · aguardando vaga")
+        : [record?.onibus_nome, record?.assento ? `Assento ${record.assento}` : ""].filter(Boolean).join(" · "),
       `Código: ${record?.codigo_inscricao || ""}`,
       "18 de outubro · saída às 7h · Orla do Marine — Maricá",
     ].filter(Boolean).join("\n");
@@ -71,14 +74,47 @@
     }
     const wait = record.status === "lista_espera";
     const waitByAge = wait && Number(record.idade) >= (cfg.waitlistFromAge ?? 35);
+    const confirmInner = document.querySelector(".confirm-inner");
+    const confirmTitle = document.getElementById("confirm-title");
+    const waitAlert = document.getElementById("waitlist-alert");
+    const waitKicker = document.getElementById("waitlist-alert-kicker");
+    const waitTitle = document.getElementById("waitlist-alert-title");
+    const waitText = document.getElementById("waitlist-alert-text");
+    const ticketBanner = document.getElementById("ticket-wait-banner");
+    const ticketCard = document.querySelector(".ticket-card");
+
+    confirmInner?.classList.toggle("is-waitlist", wait);
+    confirmInner?.classList.toggle("is-waitlist-age", waitByAge);
+    ticketCard?.classList.toggle("is-waitlist", wait);
+
+    if (waitAlert) waitAlert.hidden = !wait;
+    if (ticketBanner) ticketBanner.hidden = !wait;
+
+    if (wait) {
+      if (confirmTitle) confirmTitle.textContent = "Lista de espera";
+      if (waitKicker) waitKicker.textContent = waitByAge ? "Lista de espera · prioridade jovens" : "Lista de espera";
+      if (waitTitle) {
+        waitTitle.textContent = waitByAge
+          ? "Com 35 anos ou mais, você entra na fila"
+          : "Os ônibus estão lotados no momento";
+      }
+      if (waitText) {
+        waitText.innerHTML = waitByAge
+          ? "Esta caravana do Setor Juventude prioriza jovens de <strong>13 a 34 anos</strong>. Sua inscrição foi registrada com código, mas <strong>sem assento no ônibus por enquanto</strong>. Se surgir vaga, a coordenação avisa pelo WhatsApp."
+          : "Sua inscrição foi registrada e você está na fila. Se alguém desistir ou surgir vaga, a coordenação entra em contato pelo WhatsApp.";
+      }
+    } else if (confirmTitle) {
+      confirmTitle.textContent = "Inscrição confirmada!";
+    }
+
     document.getElementById("confirm-code").textContent = record.codigo_inscricao;
-    document.getElementById("confirm-lead").textContent = waitByAge
-      ? (cfg.youthPreferenceNote || "Esta caravana prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, você entrou na lista de espera e será avisado se surgir vaga.")
-      : wait
-        ? "Os ônibus estão lotados. Você entrou na lista de espera e será avisado quando surgir vaga."
-        : "Sua inscrição no DNJ 2026 está confirmada.";
+    document.getElementById("confirm-lead").textContent = wait
+      ? (waitByAge
+        ? "Você está inscrito, aguardando possível vaga na caravana."
+        : "Você está inscrito, aguardando vaga no ônibus.")
+      : "Sua inscrição no DNJ 2026 está confirmada.";
     document.getElementById("confirm-bus").textContent = wait
-      ? (waitByAge ? "Lista de espera · prioridade jovens 13–34" : "Lista de espera")
+      ? (waitByAge ? "Sem ônibus · fila por idade (35+)" : "Sem ônibus · aguardando vaga")
       : [record.onibus_nome, record.assento ? `Assento ${record.assento}` : "", record.idade ? `${record.idade} anos` : ""]
           .filter(Boolean).join(" · ");
     document.getElementById("ticket-name").textContent = record.nome_completo;
