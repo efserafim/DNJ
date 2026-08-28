@@ -335,6 +335,8 @@ declare
   v_pos int;
   v_total int;
   v_phone text;
+  v_obs text;
+  v_tag constant text := 'Caravana com preferência por jovens (13–34 anos). Inscrição na lista de espera por idade.';
 begin
   select * into v_cfg from public.configuracoes_evento limit 1;
   if not coalesce(v_cfg.inscricoes_abertas, true) then
@@ -355,7 +357,14 @@ begin
 
   v_idade := public.calcular_idade((p->>'data_nascimento')::date);
   v_faixa := public.faixa_por_idade(v_idade);
+  v_obs := nullif(trim(p->>'observacoes'), '');
+  if v_idade >= 35 then
+    v_obs := trim(both from coalesce(v_obs || ' ', '') || v_tag);
+  end if;
   v_onibus := public.escolher_onibus(v_faixa);
+  if v_idade >= 35 then
+    v_onibus := null;
+  end if;
 
   select count(*) into v_total from public.inscricoes where status = 'confirmada';
   if v_cfg.limite_maximo is not null and v_total >= v_cfg.limite_maximo then
@@ -385,7 +394,7 @@ begin
     coalesce((p->>'ja_participou_dnj')::boolean, false),
     nullif(p->>'como_conheceu',''),
     nullif(p->>'necessidade_especifica',''),
-    nullif(p->>'observacoes',''),
+    v_obs,
     true,
     case when v_onibus is null then 'lista_espera' else 'confirmada' end,
     v_faixa,

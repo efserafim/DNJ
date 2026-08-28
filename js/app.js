@@ -70,12 +70,15 @@
       remember(record);
     }
     const wait = record.status === "lista_espera";
+    const waitByAge = wait && Number(record.idade) >= (cfg.waitlistFromAge ?? 35);
     document.getElementById("confirm-code").textContent = record.codigo_inscricao;
-    document.getElementById("confirm-lead").textContent = wait
-      ? "Os ônibus estão lotados. Você entrou na lista de espera e será avisado quando surgir vaga."
-      : "Sua inscrição no DNJ 2026 está confirmada.";
+    document.getElementById("confirm-lead").textContent = waitByAge
+      ? (cfg.youthPreferenceNote || "Esta caravana prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, você entrou na lista de espera e será avisado se surgir vaga.")
+      : wait
+        ? "Os ônibus estão lotados. Você entrou na lista de espera e será avisado quando surgir vaga."
+        : "Sua inscrição no DNJ 2026 está confirmada.";
     document.getElementById("confirm-bus").textContent = wait
-      ? "Lista de espera"
+      ? (waitByAge ? "Lista de espera · prioridade jovens 13–34" : "Lista de espera")
       : [record.onibus_nome, record.assento ? `Assento ${record.assento}` : "", record.idade ? `${record.idade} anos` : ""]
           .filter(Boolean).join(" · ");
     document.getElementById("ticket-name").textContent = record.nome_completo;

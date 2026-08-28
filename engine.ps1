@@ -233,8 +233,13 @@ function Registrar-Inscricao($body) {
     if ($dup) { return @{ error="duplicate"; inscricao=$dup } }
     $idade = Get-Age ([string]$body.data_nascimento)
     $faixa = Get-Faixa $db $idade
+    $obsTag = "Caravana com preferencia por jovens (13-34 anos). Inscricao na lista de espera por idade."
+    $obs = if ($body.observacoes) { [string]$body.observacoes } else { $null }
     $onibus = $null
-    if ($faixa) { $onibus = Escolher-Onibus $db $faixa }
+    if ($idade -lt 35 -and $faixa) { $onibus = Escolher-Onibus $db $faixa }
+    if ($idade -ge 35) {
+      $obs = if ($obs) { "$obs $obsTag" } else { $obsTag }
+    }
     $confirmadas = @(Arr $db.inscricoes | Where-Object { $_.status -eq "confirmada" }).Count
     if ($cfg.limite_maximo -and $confirmadas -ge [int]$cfg.limite_maximo) { $onibus = $null }
     $status = if ($onibus) { "confirmada" } else { "lista_espera" }
@@ -263,7 +268,7 @@ function Registrar-Inscricao($body) {
       ja_participou_dnj=[bool]$body.ja_participou_dnj
       como_conheceu=$(if($body.como_conheceu){[string]$body.como_conheceu}else{$null})
       necessidade_especifica=$(if($body.necessidade_especifica){[string]$body.necessidade_especifica}else{$null})
-      observacoes=$(if($body.observacoes){[string]$body.observacoes}else{$null})
+      observacoes=$obs
       aceitou_termos=$true; status=$status; presente=$false
       onibus_id=$(if($onibus){$onibus.id}else{$null}); onibus_nome=$onibusNome
       faixa_etaria_id=$(if($faixa){$faixa.id}else{$null})

@@ -7,8 +7,31 @@
   const wa = cfg.termoWhatsapp || "5522920050790";
 
   function setText(id, value, fallback) {
+    const text = value || fallback || "—";
     const el = document.getElementById(id);
-    if (el) el.textContent = value || fallback || "—";
+    if (el) el.textContent = text;
+    const preview = document.getElementById(`preview-${id}`);
+    if (preview) preview.textContent = text;
+  }
+
+  function ageFromBirth(iso) {
+    if (!iso) return null;
+    const born = new Date(`${iso}T12:00:00`);
+    if (Number.isNaN(born.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - born.getFullYear();
+    const m = today.getMonth() - born.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < born.getDate())) age -= 1;
+    return age;
+  }
+
+  function recordFromForm(data) {
+    const age = ageFromBirth(data?.data_nascimento);
+    return {
+      ...data,
+      idade: age,
+      codigo_inscricao: data?.codigo_inscricao || "Gerado após confirmar",
+    };
   }
 
   function formatDate(iso) {
@@ -56,7 +79,7 @@
     setText("termo-menor-nasc", [nasc, age].filter(Boolean).join(" · "));
     setText("termo-menor-cpf", record?.cpf, "não informado");
     setText("termo-menor-whatsapp", record?.whatsapp);
-    setText("termo-codigo", record?.codigo_inscricao);
+    setText("termo-codigo", record?.codigo_inscricao, "Gerado após confirmar");
     setText("termo-coord-nome", coord.name);
     setText("termo-coord-cpf", coord.cpf);
     setText("termo-sign-name", g.nome, "");
@@ -104,5 +127,14 @@
     ].join(" ");
   }
 
-  window.DNJTermo = { isMinor, fill, print, parseGuardian, noteFromForm };
+  function fillPreview(data) {
+    fill(recordFromForm(data || {}));
+  }
+
+  function printDraft(data) {
+    fill(recordFromForm(data || {}));
+    print();
+  }
+
+  window.DNJTermo = { isMinor, fill, fillPreview, printDraft, print, parseGuardian, noteFromForm, ageFromBirth };
 })();

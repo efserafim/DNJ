@@ -746,18 +746,140 @@ tbody tr.is-present td:first-child {
 
 .cfg-bus {
   display: grid;
-  gap: 4px;
-  padding-bottom: 14px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(107, 28, 40, 0.1);
+  gap: 10px;
+  padding: 14px 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 18px;
+  border: 2px solid rgba(107, 28, 40, 0.12);
+  background: rgba(255, 252, 245, 0.92);
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
 }
 .cfg-bus:last-child {
-  border-bottom: 0;
   margin-bottom: 0;
-  padding-bottom: 0;
 }
-.cfg-bus .switch {
-  padding-top: 4px;
+.cfg-bus.is-on {
+  border-color: rgba(46, 125, 50, 0.35);
+  background: rgba(232, 245, 233, 0.55);
+}
+.cfg-bus.is-off {
+  border-color: rgba(107, 28, 40, 0.22);
+  background: rgba(245, 240, 232, 0.75);
+  opacity: 0.92;
+}
+.cfg-bus-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cfg-bus-title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.cfg-bus-title strong {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--wine);
+}
+.cfg-bus-name {
+  font-size: 0.88rem;
+  color: var(--ink);
+  opacity: 0.85;
+}
+.cfg-bus-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.cfg-bus-status[data-state="on"] {
+  color: #1b5e20;
+  background: rgba(46, 125, 50, 0.16);
+}
+.cfg-bus-status[data-state="off"] {
+  color: #6b1c28;
+  background: rgba(107, 28, 40, 0.12);
+}
+.cfg-bus-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(44, 26, 18, 0.78);
+}
+.cfg-bus.is-off .cfg-bus-hint {
+  color: rgba(107, 28, 40, 0.88);
+  font-weight: 600;
+}
+.cfg-bus-fields {
+  padding-top: 2px;
+}
+.cfg-bus.is-off .cfg-bus-fields {
+  opacity: 0.72;
+}
+
+.bus-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+.bus-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.bus-toggle-ui {
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(107, 28, 40, 0.28);
+  transition: background 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(44, 26, 18, 0.18);
+}
+.bus-toggle input:checked + .bus-toggle-ui {
+  background: linear-gradient(145deg, #43a047, #2e7d32);
+}
+.bus-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff8ea;
+  box-shadow: 0 2px 6px rgba(44, 26, 18, 0.22);
+  transition: transform 0.2s ease;
+}
+.bus-toggle input:checked + .bus-toggle-ui .bus-toggle-thumb {
+  transform: translateX(22px);
+}
+.bus-toggle-label {
+  min-width: 4.8rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--wine);
+}
+.bus-toggle input:checked ~ .bus-toggle-label {
+  color: #1b5e20;
+}
+.bus-toggle:focus-within .bus-toggle-ui {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .bus-card.is-off {

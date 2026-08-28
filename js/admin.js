@@ -315,6 +315,27 @@
         </tr>`).join("")
       : `<tr><td colspan="6" class="empty">Ninguém na espera agora.</td></tr>`;
   }
+  function syncBusToggle(box) {
+    if (!box) return;
+    const input = box.querySelector('input[name^="bus_ativo_"]');
+    const on = Boolean(input?.checked);
+    box.classList.toggle("is-off", !on);
+    box.classList.toggle("is-on", on);
+    const status = box.querySelector("[data-bus-status]");
+    const hint = box.querySelector("[data-bus-hint]");
+    const label = box.querySelector("[data-toggle-label]");
+    if (status) {
+      status.textContent = on ? "Recebendo inscrições" : "Pausado";
+      status.dataset.state = on ? "on" : "off";
+    }
+    if (hint) {
+      hint.textContent = on
+        ? "Novos inscritos podem ser alocados neste ônibus."
+        : "Sem vagas novas aqui. Quem já está inscrito permanece. Ative de novo quando quiser.";
+    }
+    if (label) label.textContent = on ? "Ativo" : "Desativado";
+  }
+
   function renderSettings() {
     const c = data.configuracoes || {};
     const form = qs("cfg-form");
@@ -325,19 +346,36 @@
     form.limite_maximo.value = c.limite_maximo ?? "";
     form.inscricoes_abertas.checked = c.inscricoes_abertas !== false;
     form.lista_espera_ativa.checked = c.lista_espera_ativa !== false;
-    qs("cfg-buses").innerHTML = data.onibus.map((o, i) => `<div class="cfg-bus">
-      <div class="cfg-grid">
-        <label class="field"><span>Nome ônibus ${o.numero}</span><input name="bus_nome_${i}" value="${esc(o.nome)}" data-id="${o.id}" /></label>
+    qs("cfg-buses").innerHTML = data.onibus.map((o, i) => {
+      const on = o.ativo !== false;
+      return `<div class="cfg-bus ${on ? "is-on" : "is-off"}" data-bus-cfg="${i}">
+      <div class="cfg-bus-head">
+        <div class="cfg-bus-title">
+          <strong>Ônibus ${String(o.numero).padStart(2, "0")}</strong>
+          <span class="cfg-bus-name">${esc(o.nome)}</span>
+          <span class="cfg-bus-status" data-bus-status data-state="${on ? "on" : "off"}">${on ? "Recebendo inscrições" : "Pausado"}</span>
+        </div>
+        <label class="bus-toggle" title="${on ? "Desativar este ônibus" : "Reativar este ônibus"}">
+          <input type="checkbox" name="bus_ativo_${i}" ${on ? "checked" : ""} />
+          <span class="bus-toggle-ui" aria-hidden="true"><span class="bus-toggle-thumb"></span></span>
+          <span class="bus-toggle-label" data-toggle-label>${on ? "Ativo" : "Desativado"}</span>
+        </label>
+      </div>
+      <p class="cfg-bus-hint" data-bus-hint>${on
+        ? "Novos inscritos podem ser alocados neste ônibus."
+        : "Sem vagas novas aqui. Quem já está inscrito permanece. Ative de novo quando quiser."}</p>
+      <div class="cfg-grid cfg-bus-fields">
+        <label class="field"><span>Nome</span><input name="bus_nome_${i}" value="${esc(o.nome)}" data-id="${o.id}" /></label>
         <label class="field"><span>Capacidade</span><input type="number" min="1" name="bus_cap_${i}" value="${o.capacidade}" data-id="${o.id}" /></label>
-        <label class="field"><span>Faixa etária deste ônibus</span>
+        <label class="field"><span>Faixa etária</span>
           <select name="bus_faixa_${i}">
             <option value="">Sem faixa definida</option>
             ${data.faixas.map((fx) => `<option value="${fx.id}" ${fx.id === o.faixa_etaria_id ? "selected" : ""}>${esc(fx.nome)}</option>`).join("")}
           </select>
         </label>
       </div>
-      <label class="switch"><input type="checkbox" name="bus_ativo_${i}" ${o.ativo === false ? "" : "checked"} /> Ônibus ativo — aceita novas inscrições</label>
-    </div>`).join("");
+    </div>`;
+    }).join("");
     qs("cfg-faixas").innerHTML = data.faixas.map((f, i) => `<div class="cfg-grid">
       <label class="field"><span>Nome da faixa</span><input name="fx_nome_${i}" value="${esc(f.nome)}" data-id="${f.id}" /></label>
       <label class="field"><span>Idade mínima</span><input type="number" name="fx_min_${i}" value="${f.idade_minima}" /></label>
@@ -539,6 +577,13 @@
       toast(err?.message || "Não foi possível transferir.", "err");
     }
   });
+  qs("cfg-buses").addEventListener("change", (e) => {
+    if (!e.target.matches('input[name^="bus_ativo_"]')) return;
+    const box = e.target.closest(".cfg-bus");
+    syncBusToggle(box);
+    const toggle = box?.querySelector(".bus-toggle");
+    if (toggle) toggle.title = e.target.checked ? "Desativar este ônibus" : "Reativar este ônibus";
+  });
   qs("cfg-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
@@ -664,7 +709,7 @@
   footer{margin-top:auto;background:linear-gradient(180deg,#8b1e2d,#6b1c28);color:#f8eedc;padding:18px 32px 14px;border-top:3px solid var(--gold)}
   .foot-grid{display:grid;grid-template-columns:1.2fr 1fr 1.4fr;gap:16px;font-size:.82rem}
   .foot-kicker{margin:0;font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.08em;color:var(--gold)}
-  .script{margin:0;font-family:"Great Vibes",cursive;font-size:1.6rem;color:#f5c84c}
+  .foot-verse{margin:4px 0 0;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:1rem;color:#f5c84c;line-height:1.35}
   .contacts{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
   .contacts span{display:block;opacity:.75;font-size:.72rem}
   .bar{margin:14px -32px -14px;padding:8px 32px;text-align:center;font-size:.72rem;letter-spacing:.08em;background:#3d1018}
@@ -682,7 +727,7 @@
 </table></main>
 <footer>
   <div class="foot-grid">
-    <div><p class="foot-kicker">Caravana ao DNJ</p><p class="script">novos.</p></div>
+    <div><p class="foot-kicker">Caravana ao DNJ</p><p class="foot-verse">“Vinho novo em odres novos” · Lc 5,37</p></div>
     <div>Paróquia Santo Antônio — Bacaxá<br>Saquarema/RJ</div>
     <div class="contacts">
       <div><span>Beatriz Moreira</span>22 92005-0790</div>

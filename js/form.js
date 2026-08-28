@@ -51,10 +51,38 @@
     form.ciente_termo_menor.required = minor;
   }
 
+  function toggleYouthWaitlist(age) {
+    const note = document.getElementById("youth-pref-note");
+    const minAge = window.DNJ_CONFIG?.waitlistFromAge ?? 35;
+    if (note) note.hidden = !(age != null && age >= minAge);
+  }
+
+  function updateTermPreview() {
+    if (!window.DNJTermo?.fillPreview) return;
+    const age = calcAge(form.data_nascimento.value);
+    if (age == null || age >= 18) return;
+    window.DNJTermo.fillPreview(window.DNJForm.payload());
+  }
+
   form.data_nascimento.addEventListener("input", () => {
     const age = calcAge(form.data_nascimento.value);
     idadeEl.value = age == null || age < 0 ? "—" : `${age} anos`;
-    if (step === 4) toggleMinor(age);
+    toggleYouthWaitlist(age);
+    if (step === 4) {
+      toggleMinor(age);
+      updateTermPreview();
+    }
+  });
+
+  ["nome_completo", "data_nascimento", "cpf", "whatsapp", "nome_responsavel", "cpf_responsavel", "parentesco_responsavel", "whatsapp_responsavel"].forEach((name) => {
+    const field = form[name];
+    if (!field) return;
+    field.addEventListener("input", updateTermPreview);
+    field.addEventListener("change", updateTermPreview);
+  });
+
+  document.getElementById("btn-preview-termo")?.addEventListener("click", () => {
+    window.DNJTermo?.printDraft(window.DNJForm.payload());
   });
 
   function showError(message) {
@@ -87,6 +115,7 @@
     btnSubmit.hidden = step !== 4;
     showError("");
     toggleMinor(calcAge(form.data_nascimento.value));
+    toggleYouthWaitlist(calcAge(form.data_nascimento.value));
     if (step === 4) {
       const p = window.DNJForm.payload();
       const review = document.getElementById("review-box");
@@ -99,6 +128,7 @@
         ["Cidade", [p.cidade, p.bairro].filter(Boolean).join(" · ") || "—"],
         p.nome_responsavel ? ["Responsável", `${p.nome_responsavel} · ${p.parentesco_responsavel || ""}`] : null,
       ].filter(Boolean).map(([k, v]) => `<p><strong>${k}</strong> ${String(v).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))}</p>`).join("");
+      updateTermPreview();
     }
     if (opts.focus) {
       const first = panels[step - 1].querySelector("input:not([readonly]), select, textarea");
