@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#C45C26" />
+  <meta name="description" content="Caravana Geração Eucarística ao DNJ 2026. Evento do Setor Juventude da Arquidiocese de Niterói. Paróquia Santo Antônio — Bacaxá, Saquarema/RJ." />
+  <link rel="canonical" href="https://dnj.geucaristica.com.br/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="Caravana Geração Eucarística ao DNJ" />
+  <meta property="og:url" content="https://dnj.geucaristica.com.br/" />
+  <meta property="og:title" content="Caravana Geração Eucarística ao DNJ 2026" />
+  <meta property="og:description" content="18 de outubro de 2026 · Saída às 6h · Orla do Marine — Maricá. Inscreva-se na caravana da Geração Eucarística." />
+  <meta property="og:image" content="https://dnj.geucaristica.com.br/assets/dnj-2026-oficial.jpg" />
+  <meta property="og:image:secure_url" content="https://dnj.geucaristica.com.br/assets/dnj-2026-oficial.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:alt" content="DNJ 2026 — Caravana Geração Eucarística ao DNJ" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Caravana Geração Eucarística ao DNJ 2026" />
+  <meta name="twitter:description" content="18 de outubro de 2026 · Saída às 6h · Orla do Marine — Maricá. Inscreva-se na caravana da Geração Eucarística." />
+  <meta name="twitter:image" content="https://dnj.geucaristica.com.br/assets/dnj-2026-oficial.jpg" />
+  <meta name="twitter:image:alt" content="DNJ 2026 — Caravana Geração Eucarística ao DNJ" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="icon" href="assets/dnj-2026-oficial.jpg" />
+  <link rel="apple-touch-icon" href="assets/dnj-2026-oficial.jpg" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Caravana Geração Eucarística ao DNJ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Great+Vibes&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/config.js"></script>
+  <script src="js/share-meta.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#btn-start">Ir para a inscrição</a>
+  <div class="grain" aria-hidden="true"></div>
+  <canvas id="ambient-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
+
+  <svg class="defs" width="0" height="0" aria-hidden="true">
+    <defs>
+      <linearGradient id="wineGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8B1E2D" />
+        <stop offset="55%" stop-color="#6B1C28" />
+        <stop offset="100%" stop-color="#3D1018" />
+      </linearGradient>
+      <linearGradient id="goldPath" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#E8B84A" stop-opacity="0.15" />
+        <stop offset="50%" stop-color="#F5C84C" stop-opacity="0.85" />
+        <stop offset="100%" stop-color="#FFF4C8" />
+      </linearGradient>
+      <linearGradient id="skinTone" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#C47A4A" />
+        <stop offset="100%" stop-color="#8B4A2A" />
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="6" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <filter id="softGlow">
+        <feGaussianBlur stdDeviation="12" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero" class="hero" aria-label="Caravana Geração Eucarística ao DNJ">
+    <div class="bokeh" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <header class="hero-top">
+      <div class="brand-logos">
+        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="88" height="88" />
+        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM — Paróquia Santo Antônio, Saquarema/RJ" width="96" height="128" />
+      </div>
+      <p class="org-line">Caravana Geração Eucarística ao DNJ</p>
+      <p class="parish-line">Setor Juventude — Arquidiocese de Niterói · Paróquia Santo Antônio - Bacaxá Saquarema/RJ</p>
+    </header>
+
+    <div class="hero-center">
+      <div class="dnj-mark">
+        <span class="dnj-letters">DNJ</span>
+        <span class="dnj-year" aria-hidden="true">
+          <span>2</span><span>0</span><span>2</span><span>6</span>
+        </span>
+        <span class="dnj-flare" aria-hidden="true"></span>
+      </div>
+      <p class="dnj-ornament" aria-hidden="true"></p>
+
+      <p class="verse">
+        <span class="verse-plain">“VINHO NOVO EM ODRES</span>
+        <span class="verse-script">novos”</span>
+      </p>
+      <p class="citation">Lc 5,37</p>
+
+      <div class="hero-divider" aria-hidden="true"><span></span></div>
+
+      <div class="meta">
+        <p class="meta-date">18 DE OUTUBRO</p>
+        <p class="meta-time">Saída às 6h da manhã</p>
+        <p class="meta-place">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+          Orla do Marine — Maricá
+        </p>
+        <div class="countdown" id="countdown" aria-label="Contagem para a saída às 6h"></div>
+      </div>
+
+      <div class="hero-actions">
+        <button type="button" class="btn-cta" id="btn-start">
+          <span class="btn-cta-fill"></span>
+          <span class="btn-cta-label">QUERO PARTICIPAR</span>
+        </button>
+        <button type="button" class="btn-ticket-link" id="btn-my-ticket" hidden>VER MEU INGRESSO</button>
+        <button type="button" class="btn-link" id="btn-lookup">Já me inscrevi · ver meu ingresso</button>
+      </div>
+      <p class="cta-hint">Saímos às 6h. Uma inscrição. Um encontro.</p>
+    </div>
+  </section>
+
+  <!-- ===================== FORM ===================== -->
+  <section id="form-view" class="form-view" hidden>
+    <div class="form-atmosphere" aria-hidden="true">
+      <span class="float-leaf l1"></span>
+      <span class="float-leaf l2"></span>
+      <span class="float-leaf l3"></span>
+      <span class="float-grape g1"></span>
+      <span class="float-grape g2"></span>
+    </div>
+
+    <div class="form-shell">
+      <button type="button" class="btn-back" id="btn-back-hero" aria-label="Voltar ao início">←</button>
+      <div class="brand-logos form-logos">
+        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="64" height="64" />
+        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="72" height="96" />
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-copy">
+          <p class="progress-kicker" id="step-kicker">A caminhada começa</p>
+          <ol class="steps" id="steps-indicator">
+            <li class="is-active">Dados pessoais</li>
+            <li>Comunidade</li>
+            <li>DNJ</li>
+            <li>Termos</li>
+          </ol>
+          <p class="step-required-note">Campos com <span class="req-mark">*</span> são obrigatórios.</p>
+        </div>
+      </div>
+
+      <form id="form-inscricao" novalidate>
+        <fieldset class="step-panel is-active" data-step="1">
+          <legend>Quem é você nessa caminhada?</legend>
+          <p class="step-intro">Cada nome aqui é uma história que Deus está escrevendo.</p>
+
+          <label class="field field-req">
+            <span>Nome completo</span>
+            <input type="text" name="nome_completo" autocomplete="name" required maxlength="120" />
+          </label>
+
+          <div class="grid-2">
+            <label class="field field-req">
+              <span>Data de nascimento</span>
+              <input type="date" name="data_nascimento" required />
+            </label>
+            <label class="field">
+              <span>Idade (calculada automaticamente)</span>
+              <input type="text" id="idade_display" value="—" readonly tabindex="-1" />
+            </label>
+          </div>
+          <p class="waitlist-note youth-pref-note" id="youth-pref-note" hidden>
+            <strong class="waitlist-note-title">Lista de espera por idade</strong>
+            <span>Esta caravana do Grupo Jovem Geração Eucarística prioriza jovens de 13 a 34 anos. Com 35 anos ou mais, sua inscrição entra direto na lista de espera — você será avisado se surgir vaga.</span>
+          </p>
+
+          <label class="field field-req">
+            <span>Sexo</span>
+            <select name="sexo" required>
+              <option value="" disabled selected>Selecione</option>
+              <option>Feminino</option>
+              <option>Masculino</option>
+            </select>
+          </label>
+
+          <label class="field field-opt">
+            <span>CPF</span>
+            <input type="text" name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+          </label>
+
+          <label class="field field-req">
+            <span>WhatsApp</span>
+            <input type="tel" name="whatsapp" inputmode="numeric" placeholder="(21) 99999-9999" required />
+          </label>
+
+          <label class="field field-opt">
+            <span>E-mail</span>
+            <input type="email" name="email" autocomplete="email" placeholder="seuemail@exemplo.com" />
+          </label>
+        </fieldset>
+
+        <fieldset class="step-panel" data-step="2" hidden>
+          <legend>De onde você vem?</legend>
+          <p class="step-intro">Sua comunidade também caminha com você.</p>
+
+          <label class="field">
+            <span>Paróquia</span>
+            <input type="text" name="paroquia" maxlength="120" value="Paróquia Santo Antônio — Bacaxá" />
+          </label>
+          <label class="field field-req">
+            <span>Comunidade</span>
+            <input type="text" name="comunidade" maxlength="120" placeholder="Igreja Matriz ou Capela" required />
+          </label>
+          <label class="field field-opt">
+            <span>Grupo ou movimento</span>
+            <input type="text" name="grupo_movimento" maxlength="120" />
+          </label>
+          <div class="grid-2">
+            <label class="field field-req">
+              <span>Cidade</span>
+              <input type="text" name="cidade" maxlength="80" value="Saquarema" required />
+            </label>
+            <label class="field field-opt">
+              <span>Bairro</span>
+              <input type="text" name="bairro" maxlength="80" />
+            </label>
+          </div>
+          <fieldset class="choice">
+            <legend>Você participa da Geração Eucarística?</legend>
+            <label><input type="radio" name="membro_geracao_eucaristica" value="true" /> Sim</label>
+            <label><input type="radio" name="membro_geracao_eucaristica" value="false" checked /> Não</label>
+          </fieldset>
+        </fieldset>
+
+        <fieldset class="step-panel" data-step="3" hidden>
+          <legend>Sua participação</legend>
+          <p class="step-intro">Conte um pouco da sua caminhada até aqui.</p>
+
+          <fieldset class="choice">
+            <legend>Já participou de algum DNJ?</legend>
+            <label><input type="radio" name="ja_participou_dnj" value="true" /> Sim</label>
+            <label><input type="radio" name="ja_participou_dnj" value="false" checked /> Não</label>
+          </fieldset>
+
+          <label class="field field-req">
+            <span>Como ficou sabendo do DNJ 2026?</span>
+            <select name="como_conheceu" required>
+              <option value="" disabled selected>Selecione</option>
+              <option>Geração Eucarística</option>
+              <option>Paróquia / missa</option>
+              <option>Instagram</option>
+              <option>WhatsApp</option>
+              <option>Amigos / família</option>
+              <option>Outro</option>
+            </select>
+          </label>
+
+          <label class="field field-opt">
+            <span>Possui alguma necessidade específica que a coordenação da caravana deva conhecer?</span>
+            <textarea name="necessidade_especifica" rows="3" maxlength="500" placeholder="Acessibilidade, alimentação, saúde..."></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset class="step-panel" data-step="4" hidden>
+          <legend>Confirme sua caminhada</legend>
+          <p class="step-intro">Confira seus dados e autorize o uso só para organizar a ida da nossa caravana ao DNJ 2026.</p>
+          <aside class="waitlist-step-alert" id="waitlist-step-alert" hidden>
+            <p class="waitlist-step-kicker">Atenção · lista de espera</p>
+            <p class="waitlist-step-title">Com sua idade, você entra na lista de espera</p>
+            <p>Esta caravana do Grupo Jovem Geração Eucarística prioriza jovens de 13 a 34 anos. Sua inscrição será registrada, mas <strong>sem assento no ônibus por enquanto</strong>. A coordenação avisa se surgir vaga.</p>
+          </aside>
+          <div class="review" id="review-box"></div>
+          <div id="bloco-menor" class="minor-form" hidden>
+            <p class="minor-form-alert">Menor de 18 anos: baixe o termo com o código abaixo, assine (papel ou gov.br) e envie para a Beatriz · 22 92005-0790.</p>
+            <h3>Dados do responsável</h3>
+            <p>Preencha os dados e confira o termo. O código já aparece no PDF — use-o na consulta da inscrição.</p>
+            <label class="field field-req">
+              <span>Nome completo do responsável</span>
+              <input type="text" name="nome_responsavel" maxlength="120" autocomplete="name" />
+            </label>
+            <div class="grid-2">
+              <label class="field field-req">
+                <span>CPF do responsável</span>
+                <input type="text" name="cpf_responsavel" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+              </label>
+              <label class="field field-req">
+                <span>Parentesco</span>
+                <select name="parentesco_responsavel">
+                  <option value="" disabled selected>Selecione</option>
+                  <option>Mãe</option>
+                  <option>Pai</option>
+                  <option>Avó</option>
+                  <option>Avô</option>
+                  <option>Tutor legal</option>
+                  <option>Outro</option>
+                </select>
+              </label>
+            </div>
+            <label class="field field-req">
+              <span>WhatsApp do responsável</span>
+              <input type="tel" name="whatsapp_responsavel" inputmode="numeric" placeholder="(21) 99999-9999" />
+            </label>
+            <div class="gov-sign-help">
+              <h4>Como assinar pelo gov.br</h4>
+              <ol>
+                <li>Baixe o rascunho em PDF abaixo — ele já traz o código da inscrição.</li>
+                <li>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a> com conta gov.br (nível prata ou ouro).</li>
+                <li>Envie o PDF, posicione a assinatura eletrônica e baixe o documento assinado.</li>
+                <li>Mande a foto nítida ou o PDF assinado para a Beatriz no WhatsApp <a href="https://wa.me/5522920050790" target="_blank" rel="noopener">22 92005-0790</a>.</li>
+              </ol>
+            </div>
+            <div class="termo-preview-wrap">
+              <h4>Termo de autorização</h4>
+              <p class="termo-preview-lead">Atualiza conforme você preenche. Imprima ou salve como PDF antes de confirmar.</p>
+              <article id="termo-preview" class="termo-preview" aria-label="Prévia do termo de autorização">
+                <header class="termo-head">
+                  <p class="termo-org">Caravana Geração Eucarística ao DNJ</p>
+                  <h1>Termo de autorização de viagem e participação</h1>
+                  <p class="termo-sub">Menor de 18 anos · DNJ 2026</p>
+                </header>
+                <div class="termo-body">
+                  <p>Eu, <strong id="preview-termo-resp-nome">________________________________</strong>, CPF <strong id="preview-termo-resp-cpf">________________</strong>, na qualidade de <strong id="preview-termo-resp-parentesco">responsável legal</strong>, autorizo o(a) menor abaixo a participar da Caravana Geração Eucarística ao DNJ, incluindo o deslocamento de ônibus, a permanência no evento e o acompanhamento pela coordenação da caravana.</p>
+                  <ul class="termo-dados">
+                    <li><span>Participante</span> <strong id="preview-termo-menor-nome">—</strong></li>
+                    <li><span>Nascimento / idade</span> <strong id="preview-termo-menor-nasc">—</strong></li>
+                    <li><span>CPF do menor</span> <strong id="preview-termo-menor-cpf">não informado</strong></li>
+                    <li><span>WhatsApp</span> <strong id="preview-termo-menor-whatsapp">—</strong></li>
+                    <li><span>Código da inscrição</span> <strong id="preview-termo-codigo">—</strong></li>
+                  </ul>
+                  <p>O evento <strong>DNJ 2026</strong> ocorre em <strong>18 de outubro de 2026</strong>, na Orla do Marine — Maricá, com saída da caravana às <strong>6h</strong>. O DNJ é promovido pelo Setor Juventude — Arquidiocese de Niterói. Esta caravana é organizada pelo Grupo Jovem Geração Eucarística, Paróquia Santo Antônio — Bacaxá, Saquarema/RJ.</p>
+                  <p>Autorizo o(a) menor a viajar e permanecer sob a responsabilidade de <strong id="preview-termo-coord-nome">Ana Beatriz Moreira dos Santos</strong>, CPF <strong id="preview-termo-coord-cpf">119.876.987-46</strong>, responsável pela caravana, e da equipe de coordenação, inclusive para acionar atendimento de saúde em caso de emergência.</p>
+                  <p>Declaro que as informações são verdadeiras e que o menor está apto a participar.</p>
+                  <div class="termo-sign">
+                    <p>Bacaxá / Saquarema-RJ, _____ / _____ / ________</p>
+                    <div class="termo-sign-pad" aria-hidden="true"></div>
+                    <div class="termo-sign-line">
+                      <span>Assinatura do responsável legal</span>
+                    </div>
+                    <p class="termo-sign-name" id="preview-termo-sign-name"></p>
+                  </div>
+                  <aside class="termo-gov">
+                    <p><strong>Assinatura pelo gov.br</strong></p>
+                    <p>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a>, envie este PDF, assine e devolva para Beatriz · WhatsApp 22 92005-0790.</p>
+                    <p>Sem o termo assinado, o menor não embarca.</p>
+                  </aside>
+                </div>
+                <p class="termo-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>
+              </article>
+              <button type="button" class="btn-ghost" id="btn-preview-termo">Baixar rascunho em PDF</button>
+            </div>
+            <label class="terms terms-req">
+              <input type="checkbox" name="ciente_termo_menor" />
+              <span>Estou ciente de que o responsável deve assinar o termo e enviar a foto nítida (ou o PDF) no WhatsApp da Beatriz (22 92005-0790).</span>
+            </label>
+          </div>
+          <label class="terms terms-req">
+            <input type="checkbox" name="aceitou_termos" required />
+            <span>Declaro que as informações são verdadeiras e autorizo seu uso exclusivamente para organizar a ida do Grupo Jovem Geração Eucarística ao DNJ 2026, evento do Setor Juventude — Arquidiocese de Niterói.</span>
+          </label>
+        </fieldset>
+
+        <p class="form-error" id="form-error" hidden></p>
+
+        <div class="form-nav">
+          <button type="button" class="btn-ghost" id="btn-prev" hidden>Voltar</button>
+          <button type="button" class="btn-next" id="btn-next">Continuar a caminhada</button>
+          <button type="submit" class="btn-cta btn-submit" id="btn-submit" hidden>
+            <span class="btn-cta-fill"></span>
+            <span class="btn-cta-label">CONFIRMAR INSCRIÇÃO</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== CONFIRMATION ===================== -->
+  <section id="confirm" class="confirm confirm-compact" hidden>
+    <div class="confirm-inner">
+      <div class="brand-logos confirm-logos">
+        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="56" height="56" />
+        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="64" height="86" />
+      </div>
+      <p class="confirm-kicker">Caravana Geração Eucarística ao DNJ</p>
+      <h1 id="confirm-title">Inscrição confirmada!</h1>
+
+      <aside class="waitlist-alert" id="waitlist-alert" hidden>
+        <p class="waitlist-alert-kicker" id="waitlist-alert-kicker">Lista de espera</p>
+        <p class="waitlist-alert-title" id="waitlist-alert-title">Sem assento no ônibus por enquanto</p>
+        <p id="waitlist-alert-text">Sua inscrição foi registrada. A coordenação entrará em contato se surgir vaga.</p>
+      </aside>
+
+      <p class="confirm-lead" id="confirm-lead">Sua inscrição no DNJ 2026 está confirmada.</p>
+      <p class="confirm-bus" id="confirm-bus"></p>
+      <p class="confirm-meta-compact">18 out 2026 · Saída 6h · Orla do Marine — Maricá</p>
+
+      <p class="code-label" id="confirm-code-label">Código · toque para copiar</p>
+      <button type="button" class="code" id="confirm-code" title="Copiar código">DNJ26---------</button>
+      <p class="copied" id="copied-msg" hidden>Código copiado.</p>
+      <p class="confirm-wait-hint" id="confirm-wait-hint" hidden>O ingresso com QR Code só é liberado quando a coordenação confirmar sua vaga no ônibus. Use o código acima para consultar sua inscrição.</p>
+
+      <div class="confirm-actions">
+        <button type="button" class="btn-cta" id="btn-view">
+          <span class="btn-cta-fill"></span>
+          <span class="btn-cta-label">VER MEU INGRESSO</span>
+        </button>
+        <div class="confirm-actions-row">
+          <button type="button" class="btn-ghost" id="btn-share">ENVIAR NO WHATSAPP</button>
+          <button type="button" class="btn-ghost" id="btn-print">IMPRIMIR INGRESSO</button>
+        </div>
+        <button type="button" class="btn-link" id="btn-home">Voltar ao início</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TICKET MODAL ===================== -->
+  <dialog id="ticket" class="ticket">
+    <button type="button" class="ticket-close" id="btn-close-ticket" aria-label="Fechar">×</button>
+    <div class="ticket-card">
+      <header class="ticket-head">
+        <div class="brand-logos ticket-logos">
+          <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="" width="48" height="48" />
+          <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="" width="56" height="78" />
+        </div>
+        <p class="ticket-org">Caravana Geração Eucarística ao DNJ</p>
+        <p class="ticket-event">DNJ <span>2026</span></p>
+        <p class="ticket-verse">“Vinho novo em odres novos” · Lc 5,37</p>
+      </header>
+      <div class="ticket-body">
+        <h2 id="ticket-name">Participante</h2>
+        <p class="ticket-code" id="ticket-code">DNJ26-</p>
+        <div class="ticket-qr-wrap">
+          <img id="ticket-qr" alt="QR Code da inscrição" width="196" height="196" />
+        </div>
+        <ul class="ticket-list">
+          <li><strong>Idade</strong> <span id="ticket-idade"></span></li>
+          <li><strong>Ônibus</strong> <span id="ticket-onibus"></span></li>
+          <li><strong>Assento</strong> <span id="ticket-assento"></span></li>
+          <li><strong>WhatsApp</strong> <span id="ticket-whatsapp"></span></li>
+          <li><strong>Data</strong> 18 de outubro de 2026</li>
+          <li><strong>Saída</strong> 6h da manhã</li>
+          <li><strong>Local</strong> Orla do Marine — Maricá</li>
+        </ul>
+        <p class="ticket-foot">Apresente este QR Code no credenciamento. Ele contém só o seu código.</p>
+      </div>
+      <p class="ticket-parish">Paróquia Santo Antônio — Bacaxá · Saquarema/RJ</p>
+    </div>
+    <div class="ticket-actions">
+      <button type="button" class="btn-ghost" id="btn-copy-ticket">Copiar código</button>
+      <button type="button" class="btn-ghost" id="btn-print-ticket">Imprimir</button>
+    </div>
+  </dialog>
+
+  <dialog id="lookup" class="ticket">
+    <button type="button" class="ticket-close" id="btn-close-lookup" aria-label="Fechar">×</button>
+    <p class="ticket-event">Consultar inscrição</p>
+    <form id="lookup-form">
+      <label class="field">
+        <span>Código ou WhatsApp</span>
+        <input type="text" name="codigo" required maxlength="20" placeholder="DNJ26-… ou (21) 99999-9999" />
+      </label>
+      <label class="field">
+        <span>Data de nascimento</span>
+        <input type="date" name="nascimento" required />
+      </label>
+      <p class="form-error" id="lookup-error" hidden></p>
+      <button type="submit" class="btn-cta"><span class="btn-cta-fill"></span><span class="btn-cta-label">BUSCAR</span></button>
+    </form>
+    <div id="lookup-result" hidden>
+      <h2 id="lookup-name"></h2>
+      <p class="ticket-code" id="lookup-code"></p>
+      <p id="lookup-meta"></p>
+      <p class="lookup-wait-note" id="lookup-wait-note" hidden>Você está na lista de espera. Ainda <strong>não há ingresso com QR Code</strong> — a coordenação avisa pelo WhatsApp quando confirmar sua vaga no ônibus.</p>
+      <button type="button" class="btn-cta" id="lookup-open-ticket"><span class="btn-cta-fill"></span><span class="btn-cta-label">VER INGRESSO COM QR CODE</span></button>
+      <p class="lookup-minor-note" id="lookup-minor-note" hidden>Menor de 18 anos: o termo com assinatura do responsável deve ser enviado para a Beatriz (22 92005-0790).</p>
+      <button type="button" class="btn-ghost" id="lookup-termo" hidden>Baixar termo de autorização (PDF)</button>
+    </div>
+  </dialog>
+
+  <article id="termo" class="termo-doc" hidden>
+    <header class="termo-head">
+      <div class="brand-logos ticket-logos">
+        <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="" width="48" height="48" />
+        <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="" width="56" height="78" />
+      </div>
+      <p class="termo-org">Caravana Geração Eucarística ao DNJ</p>
+      <h1>Termo de autorização de viagem e participação</h1>
+      <p class="termo-sub">Menor de 18 anos · DNJ 2026</p>
+    </header>
+    <div class="termo-body">
+      <p>Eu, <strong id="termo-resp-nome">________________________________</strong>, CPF <strong id="termo-resp-cpf">________________</strong>, na qualidade de <strong id="termo-resp-parentesco">responsável legal</strong>, autorizo o(a) menor abaixo a participar da Caravana Geração Eucarística ao DNJ, incluindo o deslocamento de ônibus, a permanência no evento e o acompanhamento pela coordenação da caravana.</p>
+      <ul class="termo-dados">
+        <li><span>Participante</span> <strong id="termo-menor-nome">—</strong></li>
+        <li><span>Nascimento / idade</span> <strong id="termo-menor-nasc">—</strong></li>
+        <li><span>CPF do menor</span> <strong id="termo-menor-cpf">não informado</strong></li>
+        <li><span>WhatsApp</span> <strong id="termo-menor-whatsapp">—</strong></li>
+        <li><span>Código da inscrição</span> <strong id="termo-codigo">—</strong></li>
+      </ul>
+      <p>O evento <strong>DNJ 2026</strong> ocorre em <strong>18 de outubro de 2026</strong>, na Orla do Marine — Maricá, com saída da caravana às <strong>6h</strong>. O DNJ é promovido pelo Setor Juventude — Arquidiocese de Niterói. Esta caravana é organizada pelo Grupo Jovem Geração Eucarística, Paróquia Santo Antônio — Bacaxá, Saquarema/RJ.</p>
+      <p>Autorizo o(a) menor a viajar e permanecer sob a responsabilidade de <strong id="termo-coord-nome">Ana Beatriz Moreira dos Santos</strong>, CPF <strong id="termo-coord-cpf">119.876.987-46</strong>, responsável pela caravana, e da equipe de coordenação, inclusive para acionar atendimento de saúde em caso de emergência.</p>
+      <p>Declaro que as informações são verdadeiras e que o menor está apto a participar.</p>
+      <div class="termo-sign">
+        <p>Bacaxá / Saquarema-RJ, _____ / _____ / ________</p>
+        <div class="termo-sign-pad" aria-hidden="true"></div>
+        <div class="termo-sign-line">
+          <span>Assinatura do responsável legal</span>
+        </div>
+        <p class="termo-sign-name" id="termo-sign-name"></p>
+      </div>
+      <aside class="termo-gov">
+        <p><strong>Assinatura pelo gov.br</strong></p>
+        <p>Acesse <a class="termo-gov-link" href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a>, envie este PDF, assine e devolva para Beatriz · WhatsApp 22 92005-0790.</p>
+        <p>Sem o termo assinado, o menor não embarca.</p>
+      </aside>
+    </div>
+    <p class="termo-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>
+  </article>
+
+  <footer class="site-footer">
+    <div class="footer-wrap">
+      <div class="footer-brand">
+        <div class="footer-logos">
+          <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="72" height="72" />
+          <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="80" height="108" />
+        </div>
+        <p class="footer-org">Caravana Geração Eucarística ao DNJ</p>
+        <div class="footer-brand-extra">
+          <p class="footer-kicker">DNJ <span>2026</span></p>
+          <p class="footer-verse-plain">“Vinho novo em odres</p>
+          <p class="footer-verse-script">novos.”</p>
+          <p class="footer-cite">Lc 5,37</p>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <div class="footer-meta-full">
+          <p><strong>18 de outubro de 2026</strong></p>
+          <p>Saída às 6h da manhã</p>
+          <p>Orla do Marine — Maricá</p>
+          <p>Paróquia Santo Antônio — Bacaxá · Saquarema/RJ</p>
+        </div>
+        <p class="footer-meta-short">Paróquia Santo Antônio — Bacaxá · Saquarema/RJ</p>
+      </div>
+      <div class="footer-contacts">
+        <p class="footer-contacts-title">Fale com a coordenação</p>
+        <ul>
+          <li>
+            <a href="https://wa.me/5522920050790" target="_blank" rel="noopener">
+              <svg class="wa-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.38-.53.05-1.02.24-3.44-.72-2.9-1.14-4.73-4.11-4.87-4.3-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.29.57-.36.76-.36h.55c.18.01.41-.07.64.49.24.57.81 1.97.88 2.11.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.28.14.44.12.6-.07.17-.19.69-.8.88-1.08.19-.28.37-.23.62-.14.25.09 1.61.76 1.88.9.28.14.46.21.53.33.07.12.07.68-.18 1.38z"/></svg>
+              <span class="contact-name">Beatriz Moreira</span>
+              <span class="contact-phone">22 92005-0790</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me/5522992875757" target="_blank" rel="noopener">
+              <svg class="wa-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.38-.53.05-1.02.24-3.44-.72-2.9-1.14-4.73-4.11-4.87-4.3-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.29.57-.36.76-.36h.55c.18.01.41-.07.64.49.24.57.81 1.97.88 2.11.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.28.14.44.12.6-.07.17-.19.69-.8.88-1.08.19-.28.37-.23.62-.14.25.09 1.61.76 1.88.9.28.14.46.21.53.33.07.12.07.68-.18 1.38z"/></svg>
+              <span class="contact-name">Maria Eduarda Alves</span>
+              <span class="contact-phone">22 99287-5757</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me/5522997384117" target="_blank" rel="noopener">
+              <svg class="wa-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.38-.53.05-1.02.24-3.44-.72-2.9-1.14-4.73-4.11-4.87-4.3-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.29.57-.36.76-.36h.55c.18.01.41-.07.64.49.24.57.81 1.97.88 2.11.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.28.14.44.12.6-.07.17-.19.69-.8.88-1.08.19-.28.37-.23.62-.14.25.09 1.61.76 1.88.9.28.14.46.21.53.33.07.12.07.68-.18 1.38z"/></svg>
+              <span class="contact-name">João Gabriel</span>
+              <span class="contact-phone">22 99738-4117</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me/5522998187602" target="_blank" rel="noopener">
+              <svg class="wa-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.38-.53.05-1.02.24-3.44-.72-2.9-1.14-4.73-4.11-4.87-4.3-.14-.19-1.16-1.54-1.16-2.94 0-1.4.73-2.09.99-2.37.26-.29.57-.36.76-.36h.55c.18.01.41-.07.64.49.24.57.81 1.97.88 2.11.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.72 1.18 1.54 1.91 1.06.94 1.95 1.23 2.23 1.37.28.14.44.12.6-.07.17-.19.69-.8.88-1.08.19-.28.37-.23.62-.14.25.09 1.61.76 1.88.9.28.14.46.21.53.33.07.12.07.68-.18 1.38z"/></svg>
+              <span class="contact-name">Lavínia</span>
+              <span class="contact-phone">22 99818-7602</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-bar">Paróquia Santo Antônio — Bacaxá / Saquarema-RJ</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/api.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/form.js"></script>
+  <script src="js/termo.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

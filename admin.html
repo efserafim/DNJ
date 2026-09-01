@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Caravana Geração Eucarística ao DNJ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="admin-body">
+  <section id="login" class="admin-login">
+    <div class="brand-logos">
+      <img class="logo-ge" src="assets/image/logo/geracao-eucaristica.png" alt="Geração Eucarística" width="72" height="72" />
+      <img class="logo-pascom" src="assets/image/logo/pascom.png" alt="PASCOM Santo Antônio" width="80" height="108" />
+    </div>
+    <p class="admin-kicker">Paróquia Santo Antônio — Bacaxá</p>
+    <h1>Caravana Geração Eucarística ao DNJ</h1>
+    <p>Setor Juventude — Arquidiocese de Niterói</p>
+    <form id="login-form">
+      <label class="field"><span>E-mail</span><input type="email" name="email" required autocomplete="username" placeholder="seu@geucaristica.com.br" /></label>
+      <label class="field"><span>Senha</span><input type="password" name="password" required autocomplete="current-password" /></label>
+      <p class="form-error" id="login-error" hidden></p>
+      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">ENTRAR</span></button>
+    </form>
+    <p class="hint">Acesso exclusivo da coordenação (@geucaristica.com.br). Cada pessoa tem a própria senha. No primeiro acesso, use <strong>geracao2026</strong> e crie a sua.</p>
+    <p class="hint"><a href="index.html">Ver site público de inscrições</a></p>
+  </section>
+
+  <section id="first-access" class="admin-login" hidden>
+    <p class="admin-kicker">Primeiro acesso</p>
+    <h1>Crie uma senha</h1>
+    <p class="hint">Você entrou com a senha inicial. Escolha uma senha nova — ela vale só para o seu e-mail, não altera a dos outros.</p>
+    <form id="first-access-form">
+      <label class="field"><span>Nova senha</span><input type="password" name="nova_senha" required autocomplete="new-password" /></label>
+      <label class="field"><span>Repita a nova senha</span><input type="password" name="nova_senha_conf" required autocomplete="new-password" /></label>
+      <ul class="pwd-rules">
+        <li>Pelo menos 10 caracteres</li>
+        <li>Diferente da senha inicial</li>
+      </ul>
+      <p class="form-error" id="first-access-error" hidden></p>
+      <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">SALVAR E ENTRAR</span></button>
+    </form>
+    <p class="hint">Esta senha é só sua. Os outros administradores continuam com a senha deles.</p>
+  </section>
+
+  <section id="dashboard" hidden>
+    <p class="checkin-warn" id="pwd-warn" hidden>Você ainda está usando a senha inicial. Crie a sua em Ajustes — isso não altera a senha dos outros.</p>
+    <p class="form-error dash-load-error" id="dash-error" hidden></p>
+    <header class="dash-head">
+      <div class="dash-brand">
+        <p class="admin-kicker" id="hello">Bom dia, administrador!</p>
+        <h1>Caravana ao DNJ</h1>
+        <p class="dash-sub">Geração Eucarística · Santo Antônio — Bacaxá</p>
+      </div>
+      <nav class="dash-nav" aria-label="Seções">
+        <button data-view="home" class="is-on" type="button">Visão geral</button>
+        <button data-view="buses" type="button">Ônibus</button>
+        <button data-view="people" type="button">Inscritos</button>
+        <button data-view="wait" type="button">Espera</button>
+        <button data-view="settings" type="button">Ajustes</button>
+        <a href="checkin.html">Check-in</a>
+        <a href="index.html" class="dash-site-link">Ver site</a>
+      </nav>
+      <div class="dash-meta">
+        <span class="live-dot" title="Atualização automática">Ao vivo</span>
+        <span class="dash-updated" id="dash-updated"></span>
+        <a href="checkin.html" class="btn-ghost dash-checkin-btn">Check-in</a>
+        <button class="btn-ghost" id="btn-refresh" type="button" title="Atualizar agora">Atualizar</button>
+        <a href="index.html" class="btn-ghost dash-site-btn">Ver site</a>
+        <button class="btn-ghost" id="btn-logout" type="button">Sair</button>
+      </div>
+    </header>
+
+    <div id="view-home" class="dash-view">
+      <div class="stats" id="stats"></div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Ônibus</h2>
+          <p>Ocupação em tempo real. Abra a aba Ônibus para o mapa de assentos.</p>
+        </div>
+        <div class="occupancy" id="occupancy"></div>
+        <div class="bus-row" id="bus-cards"></div>
+      </section>
+      <div class="home-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Faixas × ônibus</h2>
+          </div>
+          <div id="matrix"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Resumos</h2>
+          </div>
+          <div class="charts" id="charts"></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="view-buses" class="dash-view" hidden>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Mapa dos ônibus</h2>
+          <p>Toque em um ônibus para ver ocupantes. Use Mover para trocar de ônibus.</p>
+        </div>
+        <div class="bus-row" id="bus-detail-cards"></div>
+      </section>
+      <div id="bus-interior" class="interior" hidden></div>
+    </div>
+
+    <div id="view-people" class="dash-view" hidden>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Inscritos</h2>
+          <p id="people-count">0 pessoas</p>
+        </div>
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Buscar por nome, código, WhatsApp ou cidade…" />
+          <div class="filter-row">
+            <select id="f-status"><option value="">Status</option><option value="confirmada">Confirmada</option><option value="lista_espera">Lista de espera</option><option value="cancelada">Cancelada</option></select>
+            <select id="f-presente"><option value="">Presença</option><option value="1">Presentes</option><option value="0">Ausentes</option></select>
+            <select id="f-onibus"><option value="">Ônibus</option></select>
+            <select id="f-faixa"><option value="">Faixa etária</option></select>
+            <select id="f-menor"><option value="">Menores</option><option value="1">Só menores de 18</option><option value="termo">Termo pendente</option></select>
+            <button class="btn-ghost btn-clear" id="btn-clear" type="button">Limpar filtros</button>
+          </div>
+          <div class="export-row">
+            <span class="export-label">Exportar:</span>
+            <button class="btn-ghost" id="btn-csv" type="button">CSV</button>
+            <button class="btn-ghost" id="btn-xlsx" type="button">Excel</button>
+            <button class="btn-ghost" id="btn-pdf" type="button">PDF</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table-people">
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th class="th-sort" data-sort="nome">Nome</th>
+                <th class="th-sort" data-sort="idade">Idade</th>
+                <th>Termo</th>
+                <th class="th-sort" data-sort="faixa">Faixa</th>
+                <th class="th-sort" data-sort="onibus">Ônibus</th>
+                <th>WhatsApp</th>
+                <th class="th-sort" data-sort="codigo">Código</th>
+                <th class="th-sort" data-sort="status">Status</th>
+                <th class="th-sort" data-sort="presente">Presença</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <p class="empty" id="empty" hidden>Nenhuma inscrição encontrada com esses filtros.</p>
+        </div>
+      </section>
+    </div>
+
+    <div id="view-wait" class="dash-view" hidden>
+      <section class="panel">
+        <div class="panel-head wait-head">
+          <div>
+            <h2>Lista de espera</h2>
+            <p id="wait-alert" class="live-line">Lista de espera vazia.</p>
+          </div>
+          <button class="btn-cta" id="btn-promote" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">PROMOVER PRÓXIMO</span></button>
+        </div>
+        <div class="table-wrap">
+          <table class="table-wait">
+            <thead><tr><th>Posição</th><th>Nome</th><th>Idade</th><th>Código</th><th>Desde</th><th>Ações</th></tr></thead>
+            <tbody id="wait-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div id="view-settings" class="dash-view" hidden>
+      <form id="cfg-form" class="cfg">
+        <section class="panel">
+          <div class="panel-head"><h2>Evento</h2></div>
+          <div class="cfg-grid">
+            <label class="field"><span>Nome do evento</span><input name="nome_evento" /></label>
+            <label class="field"><span>Data</span><input type="date" name="data_evento" /></label>
+            <label class="field"><span>Local</span><input name="local_evento" /></label>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Inscrições</h2></div>
+          <div class="cfg-grid">
+            <label class="field"><span>Modo de distribuição</span>
+              <select name="modo_distribuicao">
+                <option value="equilibrado_faixa">Equilibrado por faixa etária</option>
+                <option value="equilibrado">Equilibrado</option>
+                <option value="por_faixa">Por faixa etária</option>
+                <option value="manual">Manual</option>
+              </select>
+            </label>
+            <label class="field"><span>Limite máximo (opcional)</span><input type="number" name="limite_maximo" min="0" /></label>
+            <label class="switch"><input type="checkbox" name="inscricoes_abertas" /> Inscrições abertas</label>
+            <label class="switch"><input type="checkbox" name="lista_espera_ativa" /> Lista de espera ativa</label>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Ônibus</h2><p>Use o interruptor de cada ônibus para pausar ou retomar novas inscrições.</p></div>
+          <div id="cfg-buses"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Faixas etárias</h2></div>
+          <div id="cfg-faixas"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><h2>Sua senha</h2><p>Altera só a sua senha. Não muda a dos outros administradores.</p></div>
+          <div class="cfg-grid">
+            <label class="field"><span>Nova senha</span><input type="password" name="nova_senha" autocomplete="new-password" placeholder="Deixe em branco para manter" /></label>
+            <label class="field"><span>Confirmar nova senha</span><input type="password" name="nova_senha_conf" autocomplete="new-password" /></label>
+          </div>
+        </section>
+        <p class="form-error" id="cfg-msg" hidden></p>
+        <button class="btn-cta" type="submit"><span class="btn-cta-fill"></span><span class="btn-cta-label">SALVAR CONFIGURAÇÕES</span></button>
+      </form>
+    </div>
+  </section>
+
+  <dialog id="view-inscricao" class="admin-dialog inscricao-dialog">
+    <button type="button" class="admin-dialog-close" id="btn-close-inscricao" aria-label="Fechar">×</button>
+    <h2 id="inscricao-title">Inscrição</h2>
+    <p class="inscricao-code" id="inscricao-code">DNJ26-</p>
+    <div class="inscricao-detail" id="inscricao-body"></div>
+    <button type="button" class="btn-ghost" id="btn-close-inscricao-bottom">Fechar</button>
+  </dialog>
+
+  <dialog id="transfer" class="admin-dialog">
+    <p class="admin-kicker">Transferir passageiro</p>
+    <p id="transfer-text"></p>
+    <div class="form-nav">
+      <button class="btn-ghost" id="transfer-no" type="button">Cancelar</button>
+      <button class="btn-cta" id="transfer-yes" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">CONFIRMAR</span></button>
+    </div>
+  </dialog>
+
+  <dialog id="ask" class="admin-dialog">
+    <p class="admin-kicker" id="ask-title">Confirmar</p>
+    <p id="ask-text"></p>
+    <div class="form-nav">
+      <button class="btn-ghost" id="ask-no" type="button">Cancelar</button>
+      <button class="btn-cta" id="ask-yes" type="button"><span class="btn-cta-fill"></span><span class="btn-cta-label">CONFIRMAR</span></button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <nav class="mobile-nav" aria-label="Seções do dashboard">
+    <button data-view="home" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M6 9.8V20.5h12V9.8"/></svg>
+      Início
+    </button>
+    <button data-view="buses" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="13" rx="2.5"/><path d="M4 10.5h16M7.5 20.5v-3M16.5 20.5v-3"/></svg>
+      Ônibus
+    </button>
+    <button data-view="people" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h11"/></svg>
+      Lista
+    </button>
+    <button data-view="wait" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/></svg>
+      Espera
+    </button>
+    <button data-view="settings" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M19 7h1M4 12h3M13 12h7M4 17h9M19 17h1"/><circle cx="15.5" cy="7" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="15.5" cy="17" r="2.2"/></svg>
+      Ajustes
+    </button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

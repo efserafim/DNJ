@@ -1,0 +1,17 @@
+{
+  "name": "Caravana Geração Eucarística ao DNJ",
+  "short_name": "Caravana DNJ",
+  "description": "Inscrição da Caravana Geração Eucarística ao DNJ 2026.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8EEDC",
+  "theme_color": "#C45C26",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/dnj-2026-oficial.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
