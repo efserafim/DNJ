@@ -205,21 +205,8 @@
       return (a.posicao || 0) - (b.posicao || 0);
     });
   }
-  function waitPosition(inscricaoId) {
-    const idx = waitQueue().findIndex((e) => e.inscricao_id === inscricaoId);
-    return idx >= 0 ? idx + 1 : 0;
-  }
-  function firstWaitId() {
-    return waitQueue()[0]?.inscricao_id || null;
-  }
   function moveBox(person) {
     if (person.status === "cancelada") return "";
-    if (person.status === "lista_espera") {
-      const pos = waitPosition(person.id);
-      if (person.id !== firstWaitId()) {
-        return `<span class="wait-pos" title="Aguardando vez na fila">${pos}º na fila</span>`;
-      }
-    }
     return `<select class="admin-select admin-select-move" aria-label="Mover ${esc(person.nome_completo)}" data-move-sel="${person.id}">
         <option value="">Mover para…</option>
         ${busOptions(person.onibus_id)}
@@ -243,16 +230,20 @@
       toast(`${dest.nome} está lotado.`, "warn");
       return;
     }
-    if (person.status === "lista_espera" && person.id !== firstWaitId()) {
-      toast(`Esta pessoa é ${waitPosition(person.id)}º na fila. Promova primeiro quem entrou antes.`, "warn");
-      return;
-    }
-    const yes = await ask(`Mover ${person.nome_completo} para o ${dest.nome}?`, { title: "Trocar de ônibus", ok: "MOVER" });
+    const fromWait = person.status === "lista_espera";
+    const yes = await ask(
+      fromWait
+        ? `Tirar ${person.nome_completo} da lista de espera e colocar no ${dest.nome}?`
+        : `Mover ${person.nome_completo} para o ${dest.nome}?`,
+      { title: fromWait ? "Promover da espera" : "Trocar de ônibus", ok: "MOVER" }
+    );
     if (!yes) return;
     await window.DNJApi.transfer(adminEmail, password, id, destId);
     await refresh();
     if (view === "buses" && currentBusId) openBus(currentBusId);
-    toast(`${person.nome_completo} agora está no ${dest.nome}.`);
+    toast(fromWait
+      ? `${person.nome_completo} saiu da espera e está no ${dest.nome}.`
+      : `${person.nome_completo} agora está no ${dest.nome}.`);
   }
 
   function busCard(o) {
@@ -416,10 +407,12 @@
       tr.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/inscricao", tr.dataset.id));
     });
   }
-  function renderWait() {
+  function renderWait(force) {
+    const active = document.activeElement;
+    if (!force && active?.tagName === "SELECT" && active.closest("#wait-rows")) return;
     const queue = waitQueue();
     qs("wait-alert").textContent = queue.length
-      ? `${queue.length} pessoa(s) aguardando vaga — promova sempre do 1º em diante.`
+      ? `${queue.length} pessoa(s) aguardando vaga — mova quem quiser para um ônibus com vaga.`
       : "Lista de espera vazia.";
     qs("wait-rows").innerHTML = queue.length
       ? queue.map((e, n) => {
@@ -432,8 +425,11 @@
           <td data-label="Código" class="code-cell">${esc(i.codigo_inscricao)}</td>
           <td data-label="Desde">${when(e.criado_em || i.criado_em)}</td>
           <td data-label="Ações" class="cell-actions">
-            <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
-            <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+            <div class="row-actions">
+              <button class="btn-admin" data-view-ins="${i.id}" type="button">Ver</button>
+              ${moveBox(i)}
+              <button class="btn-admin btn-danger" data-del="${i.id}" data-nome="${esc(i.nome_completo)}" type="button">Excluir</button>
+            </div>
           </td>
         </tr>`;
       }).join("")
@@ -669,7 +665,7 @@
       }
       const mover = e.target.closest("[data-move]");
       if (mover) {
-        const sel = qs("rows").querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+        const sel = mover.closest("tr")?.querySelector(`[data-move-sel="${mover.dataset.move}"]`);
         await moverInscrito(mover.dataset.move, sel?.value);
       }
     } catch (err) {
@@ -679,12 +675,18 @@
   qs("wait-rows").addEventListener("click", async (e) => {
     const viewIns = e.target.closest("[data-view-ins]");
     const del = e.target.closest("[data-del]");
+    const mover = e.target.closest("[data-move]");
     if (viewIns) {
       openInscricao(viewIns.dataset.viewIns);
       return;
     }
-    if (!del) return;
     try {
+      if (mover) {
+        const sel = mover.closest("tr")?.querySelector(`[data-move-sel="${mover.dataset.move}"]`);
+        await moverInscrito(mover.dataset.move, sel?.value);
+        return;
+      }
+      if (!del) return;
       const yes = await ask(`Excluir ${del.dataset.nome} da lista de espera?`, { title: "Excluir da espera", ok: "EXCLUIR", danger: true });
       if (yes) {
         await window.DNJApi.remove(adminEmail, password, del.dataset.del);
@@ -692,7 +694,7 @@
         toast("Removido da lista de espera.");
       }
     } catch (err) {
-      toast(err?.message || "Não foi possível excluir.", "err");
+      toast(err?.message || "Não foi possível concluir a ação.", "err");
     }
   });
   qs("btn-promote").addEventListener("click", async () => {

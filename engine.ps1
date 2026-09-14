@@ -394,10 +394,6 @@ function Transferir($id, $onibusId, $usuario) {
     if (-not $dest) { throw "Onibus nao encontrado." }
     if ($dest.ativo -eq $false -and $i.onibus_id -ne $dest.id) { throw "Onibus desativado." }
     if ((Get-Ocupacao $db $dest.id) -ge (Get-Capacidade $dest) -and $i.onibus_id -ne $dest.id) { throw "Onibus lotado." }
-    if ($i.status -eq "lista_espera") {
-      $first = Arr $db.lista_espera | Where-Object { $_.status -eq "aguardando" } | Sort-Object criado_em, posicao | Select-Object -First 1
-      if ($first -and $first.inscricao_id -ne $i.id) { throw "Proximo da fila." }
-    }
     $antes = $i.onibus_id
     foreach ($a in Arr $db.assentos) { if ($a.inscricao_id -eq $i.id) { $a.inscricao_id = $null } }
     $i.onibus_id = $dest.id; $i.onibus_nome = $dest.nome
