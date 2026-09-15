@@ -44,7 +44,7 @@
       "“Vinho novo em odres novos.” Lc 5,37",
       wait
         ? (waitByAge ? "Lista de espera · prioridade jovens 13–34" : "Lista de espera · aguardando vaga")
-        : [record?.onibus_nome, record?.assento ? `Assento ${record.assento}` : ""].filter(Boolean).join(" · "),
+        : "Inscrição confirmada",
       `Código: ${record?.codigo_inscricao || ""}`,
       "18 de outubro · saída às 6h · Orla do Marine — Maricá",
     ].filter(Boolean).join("\n");
@@ -78,8 +78,6 @@
     document.getElementById("ticket-code").textContent = record.codigo_inscricao;
     document.getElementById("ticket-whatsapp").textContent = record.whatsapp || "—";
     document.getElementById("ticket-idade").textContent = record.idade ? `${record.idade} anos` : "—";
-    document.getElementById("ticket-onibus").textContent = record.onibus_nome || "—";
-    document.getElementById("ticket-assento").textContent = record.assento || "—";
     const qr = document.getElementById("ticket-qr");
     const code = String(record.codigo_inscricao);
     qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&ecc=H&margin=8&data=${encodeURIComponent(code)}`;
@@ -148,10 +146,12 @@
         ? "Você está na fila, aguardando possível vaga na caravana."
         : "Você está na fila, aguardando vaga no ônibus.")
       : "Sua inscrição no DNJ 2026 está confirmada.";
-    document.getElementById("confirm-bus").textContent = wait
-      ? (waitByAge ? "Sem ingresso · fila por idade (35+)" : "Sem ingresso · aguardando vaga")
-      : [record.onibus_nome, record.assento ? `Assento ${record.assento}` : "", record.idade ? `${record.idade} anos` : ""]
-          .filter(Boolean).join(" · ");
+    const confirmBus = document.getElementById("confirm-bus");
+    if (confirmBus) {
+      confirmBus.textContent = wait
+        ? (waitByAge ? "Sem ingresso · fila por idade (35+)" : "Sem ingresso · aguardando vaga")
+        : (record.idade ? `${record.idade} anos` : "");
+    }
 
     updateConfirmActions(record);
 
@@ -280,8 +280,7 @@
       document.getElementById("lookup-code").textContent = row.codigo_inscricao;
       document.getElementById("lookup-meta").textContent = [
         row.idade ? `${row.idade} anos` : "",
-        isWaitlist(row) ? "Lista de espera" : (row.onibus_nome || row.status),
-        row.assento ? `Assento ${row.assento}` : "",
+        isWaitlist(row) ? "Lista de espera" : "Inscrição confirmada",
         row.presente ? "Check-in realizado" : (isWaitlist(row) ? "Sem ingresso ainda" : "Aguardando o dia"),
       ].filter(Boolean).join(" · ");
       updateLookupResult(row);
