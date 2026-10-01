@@ -247,7 +247,7 @@
   }
 
   function busCard(o) {
-    const dots = Array.from({ length: Math.min(o.capacidade, 40) }, (_, n) => `<i class="${n < o.ocupados ? "on" : ""}"></i>`).join("");
+    const dots = Array.from({ length: Math.min(o.capacidade, 44) }, (_, n) => `<i class="${n < o.ocupados ? "on" : ""}"></i>`).join("");
     const faixa = faixaDoOnibus(o);
     const off = o.ativo === false;
     return `<article class="bus-card${off ? " is-off" : ""}" data-bus="${o.id}" style="background:linear-gradient(160deg, ${o.cor}, #3d1018)">

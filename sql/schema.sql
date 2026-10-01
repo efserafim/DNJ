@@ -48,7 +48,7 @@ create table if not exists public.onibus (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   numero integer not null unique,
-  capacidade integer not null default 50,
+  capacidade integer not null default 44,
   capacidade_reservada integer not null default 0,
   ativo boolean not null default true,
   descricao text,
@@ -509,9 +509,9 @@ on conflict (email) do nothing;
 
 insert into public.onibus (nome, numero, capacidade, cor, ordem, descricao)
 select * from (values
-  ('Ônibus São Pedro', 1, 50, '#c45c26', 1, 'Caminhada com São Pedro'),
-  ('Ônibus São Paulo', 2, 50, '#6b1c28', 2, 'Caminhada com São Paulo'),
-  ('Ônibus São João', 3, 50, '#e8b84a', 3, 'Caminhada com São João')
+  ('Ônibus São Pedro', 1, 44, '#c45c26', 1, 'Caminhada com São Pedro'),
+  ('Ônibus São Paulo', 2, 44, '#6b1c28', 2, 'Caminhada com São Paulo'),
+  ('Ônibus São João', 3, 44, '#e8b84a', 3, 'Caminhada com São João')
 ) as v(nome, numero, capacidade, cor, ordem, descricao)
 where not exists (select 1 from public.onibus);
 

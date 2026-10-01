@@ -84,9 +84,9 @@ function New-Seed {
   $o1 = New-Id; $o2 = New-Id; $o3 = New-Id
   $f1 = New-Id; $f2 = New-Id; $f3 = New-Id
   $onibus = @(
-    [pscustomobject]@{ id=$o1; nome="Onibus Sao Pedro"; numero=1; capacidade=50; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Pedro"; cor="#c45c26"; ordem=1 }
-    [pscustomobject]@{ id=$o2; nome="Onibus Sao Paulo"; numero=2; capacidade=50; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Paulo"; cor="#6b1c28"; ordem=2 }
-    [pscustomobject]@{ id=$o3; nome="Onibus Sao Joao"; numero=3; capacidade=50; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Joao"; cor="#e8b84a"; ordem=3 }
+    [pscustomobject]@{ id=$o1; nome="Onibus Sao Pedro"; numero=1; capacidade=44; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Pedro"; cor="#c45c26"; ordem=1 }
+    [pscustomobject]@{ id=$o2; nome="Onibus Sao Paulo"; numero=2; capacidade=44; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Paulo"; cor="#6b1c28"; ordem=2 }
+    [pscustomobject]@{ id=$o3; nome="Onibus Sao Joao"; numero=3; capacidade=44; capacidade_reservada=0; ativo=$true; descricao="Caminhada com Sao Joao"; cor="#e8b84a"; ordem=3 }
   )
   $faixas = @(
     [pscustomobject]@{ id=$f1; nome="13 a 17 anos"; idade_minima=13; idade_maxima=17; cor="#c45c26"; prioridade=1; ativo=$true; onibus_preferido_id=$null }
